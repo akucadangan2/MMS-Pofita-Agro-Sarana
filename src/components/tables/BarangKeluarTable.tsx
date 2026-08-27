@@ -9,7 +9,7 @@ type DeliveryRow = {
 
 export function BarangKeluarTable({ deliveries }: { deliveries: DeliveryRow[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-left text-slate-500">
           <tr>

@@ -162,7 +162,7 @@ export default async function LaporanAdminPage({
         <h2 className="text-lg font-medium text-slate-700">Rekap Permintaan per Cabang</h2>
         <a href={linkExportCabang} className="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">⬇ Export CSV</a>
       </div>
-      <div className="mb-8 overflow-hidden rounded-lg border bg-white">
+      <div className="mb-8 overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>
@@ -196,7 +196,7 @@ export default async function LaporanAdminPage({
         <h2 className="text-lg font-medium text-slate-700">Rekap Barang Keluar Customer</h2>
         <a href={linkExportBarangKeluar} className="rounded border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50">⬇ Export CSV</a>
       </div>
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>

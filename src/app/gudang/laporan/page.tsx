@@ -112,7 +112,7 @@ export default async function LaporanGudangPage({
       </div>
 
       <h2 className="mb-2 text-lg font-medium text-slate-700">Rekap Barang Diambil</h2>
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>

@@ -65,7 +65,7 @@ export default async function PickingPage() {
             <h2 className="mb-2 text-lg font-medium text-slate-700">
               {lantai} <span className="text-sm text-slate-400">({itemsLantai.length} item)</span>
             </h2>
-            <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+            <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-500">
                   <tr>

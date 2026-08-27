@@ -7,7 +7,7 @@ type StockRow = {
 
 export function StokTable({ stock }: { stock: StockRow[] }) {
   return (
-    <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
       <table className="w-full text-sm">
         <thead className="bg-slate-50 text-left text-slate-500">
           <tr>

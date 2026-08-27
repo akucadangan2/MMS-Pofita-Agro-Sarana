@@ -61,7 +61,7 @@ export default async function MasterBarangPage() {
 
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
             <tr>

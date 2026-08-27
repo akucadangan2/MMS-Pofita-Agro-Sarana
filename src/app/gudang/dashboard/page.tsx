@@ -127,7 +127,7 @@ export default async function DashboardGudangPage() {
         ====================================================== */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
           {/* Tren Request */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Tren Request</h2>
@@ -143,7 +143,7 @@ export default async function DashboardGudangPage() {
           </div>
 
           {/* Top Barang */}
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
                 <h2 className="text-sm font-semibold text-slate-900">Barang Terlaris</h2>
