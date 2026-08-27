@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { tambahBarang, hapusBarang } from "./actions";
+import { Pagination } from "@/components/ui/Pagination";
+import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
 
 type ItemRow = {
   id: string;
@@ -12,15 +14,33 @@ type ItemRow = {
 
 type StockRow = { item_id: string; qty: number };
 
-export default async function BarangGudangPage() {
+export default async function BarangGudangPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; halaman?: string; ukuran?: string }>;
+}) {
+  const params = await searchParams;
+  const q = params.q ?? "";
+  const ukuran = params.ukuran ?? "20";
+  const halaman = Math.max(1, Number(params.halaman) || 1);
+  const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
+
   const supabase = await createClient();
 
-  const { data: itemsData, error } = await supabase
+  let query = supabase
     .from("items")
-    .select("id, kode, nama, kategori, satuan_dasar")
+    .select("id, kode, nama, kategori, satuan_dasar", { count: "exact" })
     .order("kode");
 
+  if (q) query = query.or(`kode.ilike.%${q}%,nama.ilike.%${q}%`);
+  if (pageSize) {
+    const dari = (halaman - 1) * pageSize;
+    query = query.range(dari, dari + pageSize - 1);
+  }
+
+  const { data: itemsData, count, error } = await query;
   const items = (itemsData as ItemRow[]) ?? [];
+  const totalHalaman = pageSize ? Math.max(1, Math.ceil((count ?? 0) / pageSize)) : 1;
 
   const { data: stockData } = await supabase.from("stock").select("item_id, qty");
   const stockRows = (stockData as StockRow[]) ?? [];
@@ -55,6 +75,20 @@ export default async function BarangGudangPage() {
           + Tambah Barang
         </button>
       </form>
+
+      <div className="mb-4 flex items-center gap-3">
+        <form method="GET" className="flex-1">
+          <input type="hidden" name="ukuran" value={ukuran} />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Cari kode atau nama barang..."
+            className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
+        </form>
+        <PageSizeSelector ukuran={ukuran} />
+      </div>
 
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
@@ -97,13 +131,17 @@ export default async function BarangGudangPage() {
             {items.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
-                  Belum ada barang.
+                  {q ? "Tidak ada hasil yang cocok." : "Belum ada barang."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {pageSize && (
+        <Pagination halamanSekarang={halaman} totalHalaman={totalHalaman} q={q} ukuran={ukuran} basePath="/gudang/barang" />
+      )}
     </div>
   );
 }

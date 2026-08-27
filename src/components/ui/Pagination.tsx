@@ -6,17 +6,24 @@ export function Pagination({
   q,
   ukuran,
   basePath,
+  extraParams,
 }: {
   halamanSekarang: number;
   totalHalaman: number;
   q?: string;
   ukuran?: string;
   basePath: string;
+  extraParams?: Record<string, string>;
 }) {
   if (totalHalaman <= 1) return null;
 
   function buatLink(halaman: number) {
     const params = new URLSearchParams();
+    if (extraParams) {
+      for (const [key, value] of Object.entries(extraParams)) {
+        if (value) params.set(key, value);
+      }
+    }
     if (q) params.set("q", q);
     if (ukuran) params.set("ukuran", ukuran);
     params.set("halaman", String(halaman));

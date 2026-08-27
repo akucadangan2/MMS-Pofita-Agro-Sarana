@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { catatBarangMasuk } from "./actions";
+import { Pagination } from "@/components/ui/Pagination";
+import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
 
 type Barang = { id: string; kode: string; nama: string };
 type Lokasi = { id: string; lantai: string; area: string | null; rak: string | null };
@@ -11,7 +13,17 @@ type MovementRow = {
   items: { kode: string; nama: string } | null;
 };
 
-export default async function BarangMasukPage() {
+export default async function BarangMasukPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; halaman?: string; ukuran?: string }>;
+}) {
+  const params = await searchParams;
+  const q = params.q ?? "";
+  const ukuran = params.ukuran ?? "20";
+  const halaman = Math.max(1, Number(params.halaman) || 1);
+  const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
+
   const supabase = await createClient();
 
   const { data: itemsData } = await supabase.from("items").select("id, kode, nama").order("nama");
@@ -23,14 +35,21 @@ export default async function BarangMasukPage() {
     .order("lantai");
   const daftarLokasi = (locationsData as Lokasi[]) ?? [];
 
-  const { data: movementsData, error } = await supabase
+  let query = supabase
     .from("stock_movements")
-    .select("id, qty, satuan, created_at, items(kode, nama)")
+    .select("id, qty, satuan, created_at, items!inner(kode, nama)", { count: "exact" })
     .eq("tipe", "masuk")
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .order("created_at", { ascending: false });
 
+  if (q) query = query.or(`kode.ilike.%${q}%,nama.ilike.%${q}%`, { foreignTable: "items" });
+  if (pageSize) {
+    const dari = (halaman - 1) * pageSize;
+    query = query.range(dari, dari + pageSize - 1);
+  }
+
+  const { data: movementsData, count, error } = await query;
   const movements = (movementsData as unknown as MovementRow[]) ?? [];
+  const totalHalaman = pageSize ? Math.max(1, Math.ceil((count ?? 0) / pageSize)) : 1;
 
   return (
     <div>
@@ -77,6 +96,20 @@ export default async function BarangMasukPage() {
         </button>
       </form>
 
+      <div className="mb-4 flex items-center gap-3">
+        <form method="GET" className="flex-1">
+          <input type="hidden" name="ukuran" value={ukuran} />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Cari kode atau nama barang..."
+            className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
+        </form>
+        <PageSizeSelector ukuran={ukuran} />
+      </div>
+
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
       <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
@@ -103,13 +136,17 @@ export default async function BarangMasukPage() {
             {movements.length === 0 && (
               <tr>
                 <td colSpan={4} className="px-4 py-10 text-center text-slate-400">
-                  Belum ada catatan barang masuk.
+                  {q ? "Tidak ada hasil yang cocok." : "Belum ada catatan barang masuk."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {pageSize && (
+        <Pagination halamanSekarang={halaman} totalHalaman={totalHalaman} q={q} ukuran={ukuran} basePath="/gudang/barang-masuk" />
+      )}
     </div>
   );
 }

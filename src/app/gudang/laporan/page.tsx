@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { Pagination } from "@/components/ui/Pagination";
+import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
 
 type RequestRow = {
   id: string;
@@ -25,13 +27,15 @@ function hariIni() {
 export default async function LaporanGudangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dari?: string; sampai?: string; operator?: string; supervisor?: string }>;
+  searchParams: Promise<{ dari?: string; sampai?: string; q?: string; halaman?: string; ukuran?: string }>;
 }) {
   const params = await searchParams;
   const dari = params.dari || awalBulanIni();
   const sampai = params.sampai || hariIni();
-  const operator = params.operator ?? "";
-  const supervisor = params.supervisor ?? "";
+  const q = params.q ?? "";
+  const ukuran = params.ukuran ?? "20";
+  const halaman = Math.max(1, Number(params.halaman) || 1);
+  const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
 
   const supabase = await createClient();
 
@@ -68,19 +72,29 @@ export default async function LaporanGudangPage({
       rekapMap.set(key, { kode: i.items.kode, nama: i.items.nama, qty: i.qty_terambil, satuan: i.satuan });
     }
   }
-  const rekap = Array.from(rekapMap.values()).sort((a, b) => b.qty - a.qty);
+  let rekap = Array.from(rekapMap.values()).sort((a, b) => b.qty - a.qty);
   const totalJenisBarang = rekap.length;
 
+  if (q) {
+    const ql = q.toLowerCase();
+    rekap = rekap.filter((r) => r.kode.toLowerCase().includes(ql) || r.nama.toLowerCase().includes(ql));
+  }
+
+  const totalHalaman = pageSize ? Math.max(1, Math.ceil(rekap.length / pageSize)) : 1;
+  const rekapDitampilkan = pageSize
+    ? rekap.slice((halaman - 1) * pageSize, (halaman - 1) * pageSize + pageSize)
+    : rekap;
+
   const linkExportCsv = "/api/export/laporan-gudang?dari=" + dari + "&sampai=" + sampai;
-  const linkPrint =
-    "/print/laporan-gudang?dari=" + dari + "&sampai=" + sampai +
-    "&operator=" + encodeURIComponent(operator) + "&supervisor=" + encodeURIComponent(supervisor);
+  const linkPrint = "/print/laporan-gudang?dari=" + dari + "&sampai=" + sampai;
 
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold text-slate-800">Laporan Pengambilan Gudang</h1>
 
       <form method="GET" className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
+        <input type="hidden" name="q" value={q} />
+        <input type="hidden" name="ukuran" value={ukuran} />
         <div>
           <label className="mb-1 block text-xs text-slate-500">Dari Tanggal</label>
           <input type="date" name="dari" defaultValue={dari} className="rounded border px-3 py-2 text-sm" />
@@ -88,14 +102,6 @@ export default async function LaporanGudangPage({
         <div>
           <label className="mb-1 block text-xs text-slate-500">Sampai Tanggal</label>
           <input type="date" name="sampai" defaultValue={sampai} className="rounded border px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-500">Operator</label>
-          <input name="operator" defaultValue={operator} placeholder="Nama operator" className="w-32 rounded border px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-500">Supervisor</label>
-          <input name="supervisor" defaultValue={supervisor} placeholder="Nama supervisor" className="w-32 rounded border px-3 py-2 text-sm" />
         </div>
         <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Terapkan</button>
         <a href={linkExportCsv} className="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">⬇ Export CSV</a>
@@ -112,6 +118,23 @@ export default async function LaporanGudangPage({
       </div>
 
       <h2 className="mb-2 text-lg font-medium text-slate-700">Rekap Barang Diambil</h2>
+
+      <div className="mb-4 flex items-center gap-3">
+        <form method="GET" className="flex-1">
+          <input type="hidden" name="dari" value={dari} />
+          <input type="hidden" name="sampai" value={sampai} />
+          <input type="hidden" name="ukuran" value={ukuran} />
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Cari kode atau nama barang..."
+            className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          />
+        </form>
+        <PageSizeSelector ukuran={ukuran} />
+      </div>
+
       <div className="overflow-x-auto rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-slate-500">
@@ -122,7 +145,7 @@ export default async function LaporanGudangPage({
             </tr>
           </thead>
           <tbody>
-            {rekap.map((r) => (
+            {rekapDitampilkan.map((r) => (
               <tr key={r.kode} className="border-t">
                 <td className="px-4 py-2">{r.kode}</td>
                 <td className="px-4 py-2">{r.nama}</td>
@@ -131,16 +154,27 @@ export default async function LaporanGudangPage({
                 </td>
               </tr>
             ))}
-            {rekap.length === 0 && (
+            {rekapDitampilkan.length === 0 && (
               <tr>
                 <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
-                  Tidak ada data pengambilan di periode ini.
+                  {q ? "Tidak ada hasil yang cocok." : "Tidak ada data pengambilan di periode ini."}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {pageSize && (
+        <Pagination
+          halamanSekarang={halaman}
+          totalHalaman={totalHalaman}
+          q={q}
+          ukuran={ukuran}
+          basePath="/gudang/laporan"
+          extraParams={{ dari, sampai }}
+        />
+      )}
     </div>
   );
 }
