@@ -1,0 +1,77 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes blob-move {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -40px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.95); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px 0 rgba(56, 189, 248, 0.35), 0 0 60px 0 rgba(168, 85, 247, 0.25); }
+  50% { box-shadow: 0 0 32px 4px rgba(56, 189, 248, 0.55), 0 0 90px 10px rgba(168, 85, 247, 0.4); }
+}
+
+.animate-blob {
+  animation: blob-move 10s ease-in-out infinite;
+}
+.animate-blob-delay {
+  animation: blob-move 12s ease-in-out infinite;
+  animation-delay: 2s;
+}
+.animate-gradient-text {
+  background-size: 200% 200%;
+  animation: gradient-shift 4s ease infinite;
+}
+.animate-glow {
+  animation: glow-pulse 3s ease-in-out infinite;
+}
+
+@keyframes lego-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-18px); }
+}
+
+.lego-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  animation: lego-bounce 1.6s ease-in-out infinite;
+}
+
+.lego-delay-0 { animation-delay: 0s; }
+.lego-delay-1 { animation-delay: 0.15s; }
+.lego-delay-2 { animation-delay: 0.3s; }
+.lego-delay-3 { animation-delay: 0.45s; }
+.lego-delay-4 { animation-delay: 0.6s; }
