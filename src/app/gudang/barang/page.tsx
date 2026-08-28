@@ -17,13 +17,14 @@ type StockRow = { item_id: string; qty: number };
 export default async function BarangGudangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; halaman?: string; ukuran?: string }>;
+  searchParams: Promise<{ q?: string; halaman?: string; ukuran?: string; berhasil?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q ?? "";
   const ukuran = params.ukuran ?? "20";
   const halaman = Math.max(1, Number(params.halaman) || 1);
   const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
+  const berhasil = params.berhasil === "1";
 
   const supabase = await createClient();
 
@@ -53,6 +54,12 @@ export default async function BarangGudangPage({
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold text-slate-800">Barang</h1>
+
+      {berhasil && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          ✓ Perubahan berhasil disimpan.
+        </div>
+      )}
 
       <form action={tambahBarang} className="mb-6 flex flex-wrap items-end gap-3 rounded-xl border bg-white p-4 shadow-sm">
         <div>

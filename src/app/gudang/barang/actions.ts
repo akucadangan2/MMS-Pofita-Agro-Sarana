@@ -50,7 +50,7 @@ export async function updateBarang(formData: FormData) {
 
   revalidatePath("/gudang/barang");
   revalidatePath("/admin/barang");
-  redirect("/gudang/barang");
+  redirect("/gudang/barang?berhasil=1");
 }
 
 export async function hapusBarang(formData: FormData) {
