@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { tandaiTerambil } from "../request/actions";
+import Link from "next/link";
 
 type PickingRow = {
   id: string;
@@ -53,8 +54,15 @@ export default async function PickingPage() {
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-semibold text-slate-800">Picking</h1>
-      <p className="mb-6 text-sm text-slate-500">Antrian barang yang masih perlu diambil, dari semua request</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="mb-1 text-2xl font-semibold text-slate-800">Picking</h1>
+          <p className="text-sm text-slate-500">Antrian barang yang masih perlu diambil, dari semua request</p>
+        </div>
+        <Link href="/gudang/picking/scan" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+          📷 Scan Barcode
+        </Link>
+      </div>
 
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
