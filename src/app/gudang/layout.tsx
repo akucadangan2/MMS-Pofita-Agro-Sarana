@@ -13,24 +13,12 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/ui/AppShell";
 import { TopBar } from "@/components/ui/TopBar";
+import { RealtimeRefresher } from "@/components/ui/RealtimeRefresher";
 import { createClient } from "@/lib/supabase/server";
-
-const menuGudang = [
-  { label: "Dashboard", href: "/gudang/dashboard", icon: <LayoutDashboard /> },
-  { label: "Request Masuk", href: "/gudang/request", icon: <Inbox /> },
-  { label: "Picking", href: "/gudang/picking", icon: <ClipboardList /> },
-  { label: "Riwayat Picking", href: "/gudang/riwayat-picking", icon: <History /> },
-  { label: "Stok", href: "/gudang/stok", icon: <Package /> },
-  { label: "Barang", href: "/gudang/barang", icon: <Boxes /> },
-  { label: "Lokasi", href: "/gudang/lokasi", icon: <MapPin /> },
-  { label: "Barang Masuk", href: "/gudang/barang-masuk", icon: <ArrowDownToLine /> },
-  { label: "Barang Keluar", href: "/gudang/barang-keluar", icon: <ArrowUpFromLine /> },
-  { label: "Laporan", href: "/gudang/laporan", icon: <BarChart3 /> },
-  { label: "Pengaturan", href: "/gudang/pengaturan", icon: <Settings /> },
-];
 
 export default async function GudangLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -41,9 +29,31 @@ export default async function GudangLayout({ children }: { children: React.React
     if (data?.nama) nama = data.nama;
   }
 
+  const { count: totalBaru } = await supabase
+    .from("requests")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "baru");
+
+  const menuGudang = [
+    { label: "Dashboard", href: "/gudang/dashboard", icon: <LayoutDashboard /> },
+    { label: "Request Masuk", href: "/gudang/request", icon: <Inbox />, badge: totalBaru ?? 0 },
+    { label: "Picking", href: "/gudang/picking", icon: <ClipboardList /> },
+    { label: "Riwayat Picking", href: "/gudang/riwayat-picking", icon: <History /> },
+    { label: "Stok", href: "/gudang/stok", icon: <Package /> },
+    { label: "Barang", href: "/gudang/barang", icon: <Boxes /> },
+    { label: "Lokasi", href: "/gudang/lokasi", icon: <MapPin /> },
+    { label: "Barang Masuk", href: "/gudang/barang-masuk", icon: <ArrowDownToLine /> },
+    { label: "Barang Keluar", href: "/gudang/barang-keluar", icon: <ArrowUpFromLine /> },
+    { label: "Laporan", href: "/gudang/laporan", icon: <BarChart3 /> },
+    { label: "Pengaturan", href: "/gudang/pengaturan", icon: <Settings /> },
+  ];
+
   return (
-    <AppShell title="Gudang" items={menuGudang} topBar={<TopBar nama={nama} />}>
-      {children}
-    </AppShell>
+    <>
+      <RealtimeRefresher table="requests" />
+      <AppShell title="Gudang" items={menuGudang} topBar={<TopBar nama={nama} />}>
+        {children}
+      </AppShell>
+    </>
   );
 }

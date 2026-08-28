@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { tandaiTerambil } from "../request/actions";
+import { tandaiTerambilDariPicking } from "./actions";
 import Link from "next/link";
 
 type PickingRow = {
@@ -16,7 +16,14 @@ type PickingRow = {
 
 type ItemLocationRow = { item_id: string; locations: { lantai: string } | null };
 
-export default async function PickingPage() {
+export default async function PickingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ berhasil?: string }>;
+}) {
+  const params = await searchParams;
+  const berhasil = params.berhasil === "1";
+
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -64,6 +71,12 @@ export default async function PickingPage() {
         </Link>
       </div>
 
+      {berhasil && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          ✓ Barang berhasil ditandai terambil.
+        </div>
+      )}
+
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
       {daftarLantai.map((lantai) => {
@@ -96,7 +109,7 @@ export default async function PickingPage() {
                       <td className="px-4 py-3 text-slate-500">{r.items?.kategori ?? "-"}</td>
                       <td className="px-4 py-3">{r.qty_diminta} {r.satuan}</td>
                       <td className="px-4 py-3">
-                        <form action={tandaiTerambil}>
+                        <form action={tandaiTerambilDariPicking}>
                           <input type="hidden" name="itemId" value={r.id} />
                           <input type="hidden" name="requestId" value={r.request_id} />
                           <input type="hidden" name="qtyDiminta" value={r.qty_diminta} />

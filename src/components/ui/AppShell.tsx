@@ -1,14 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, cloneElement, isValidElement } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ChevronLeft, ChevronRight } from "lucide-react";
 
-type NavItem = { label: string; href: string; icon: React.ReactElement };
+type NavItem = { label: string; href: string; icon: React.ReactElement; badge?: number };
 
 function renderIcon(icon: React.ReactElement, size: number) {
+  if (isValidElement(icon)) {
+    return cloneElement(icon as React.ReactElement<{ size?: number; strokeWidth?: number }>, {
+      size,
+      strokeWidth: 2,
+    });
+  }
   return icon;
+}
+
+function Badge({ jumlah }: { jumlah: number }) {
+  if (jumlah <= 0) return null;
+  return (
+    <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-medium text-white">
+      {jumlah > 99 ? "99+" : jumlah}
+    </span>
+  );
 }
 
 export function AppShell({
@@ -56,6 +71,7 @@ export function AppShell({
         >
           {renderIcon(item.icon, ukuranIkon)}
           <span>{item.label}</span>
+          {!aktif && <Badge jumlah={item.badge ?? 0} />}
         </Link>
       );
     });
@@ -63,7 +79,6 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar tetap — cuma muncul di layar besar (desktop) */}
       {!collapsed && (
         <aside className="hidden h-screen w-64 shrink-0 flex-col bg-[#F2F2F7]/80 px-3 py-6 backdrop-blur-xl lg:flex">
           <div className="mb-6 flex items-center justify-between px-3">
@@ -79,7 +94,6 @@ export function AppShell({
         </aside>
       )}
 
-      {/* Drawer geser — buat tablet & HP */}
       {drawerTerbuka && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDrawerTerbuka(false)} />
@@ -99,7 +113,6 @@ export function AppShell({
       )}
 
       <div className="flex-1">
-        {/* Bar atas mobile/tablet: tombol hamburger */}
         <div className="flex items-center gap-3 border-b border-black/5 bg-white/70 px-4 py-3 backdrop-blur-xl lg:hidden">
           <button onClick={() => setDrawerTerbuka(true)} className="rounded-lg p-1.5 text-slate-600 hover:bg-black/5" aria-label="Buka menu">
             <Menu size={22} />
@@ -108,7 +121,6 @@ export function AppShell({
           <p className="text-base font-semibold text-slate-900">{title}</p>
         </div>
 
-        {/* Bar horizontal pengganti sidebar pas di-collapse manual (desktop) */}
         {collapsed && (
           <div className="hidden items-center gap-1 overflow-x-auto border-b border-black/5 bg-white/70 px-3 py-2 backdrop-blur-xl lg:flex">
             <button onClick={toggle} className="mr-1 shrink-0 rounded-lg p-1.5 text-slate-500 hover:bg-black/5 hover:text-slate-800" aria-label="Buka sidebar">
@@ -127,6 +139,11 @@ export function AppShell({
                 >
                   {item.icon}
                   {item.label}
+                  {!aktif && item.badge ? (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium text-white">
+                      {item.badge > 99 ? "99+" : item.badge}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}
