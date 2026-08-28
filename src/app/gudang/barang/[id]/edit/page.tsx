@@ -8,6 +8,8 @@ type Barang = {
   kode: string;
   nama: string;
   kategori: string | null;
+  merek: string | null;
+  deskripsi: string | null;
   satuan_dasar: string;
 };
 
@@ -17,7 +19,7 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
 
   const { data } = await supabase
     .from("items")
-    .select("id, kode, nama, kategori, satuan_dasar")
+    .select("id, kode, nama, kategori, merek, deskripsi, satuan_dasar")
     .eq("id", id)
     .single();
 
@@ -44,6 +46,19 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
         <div>
           <label className="mb-1 block text-xs text-slate-500">Kategori</label>
           <input name="kategori" defaultValue={item.kategori ?? ""} className="w-full rounded-lg border px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Merek</label>
+          <input name="merek" defaultValue={item.merek ?? ""} className="w-full rounded-lg border px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Deskripsi</label>
+          <textarea
+            name="deskripsi"
+            defaultValue={item.deskripsi ?? ""}
+            rows={3}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500">Satuan Dasar</label>

@@ -71,51 +71,54 @@ export default async function PrintRequestPage({
     : allItems;
 
   return (
-    <div className="mx-auto max-w-md p-6 print:p-0">
-      <div className="mb-4 flex justify-end print:hidden">
-        <PrintButton />
-      </div>
-
-      <div className="rounded-lg border-2 border-slate-800 p-4">
-        <h1 className="text-center text-lg font-bold uppercase">List Pengambilan Barang</h1>
-        <p className="mb-3 text-center text-sm font-semibold">{requestDetail.no_request}</p>
-
-        <div className="mb-3 flex justify-between text-sm">
-          <span>Cabang: {requestDetail.branches?.nama ?? "-"}</span>
-          {lantai && <span className="font-semibold">{lantai}</span>}
+    <>
+      <style>{`@media print { @page { size: 80mm auto; margin: 4mm; } }`}</style>
+      <div className="mx-auto max-w-[80mm] p-6 text-xs print:p-0">
+        <div className="mb-4 flex justify-end print:hidden">
+          <PrintButton />
         </div>
-        <p className="mb-3 text-sm">
-          Tanggal: {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
-        </p>
 
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-slate-800">
-              <th className="py-1 text-left">No</th>
-              <th className="py-1 text-left">Kode</th>
-              <th className="py-1 text-left">Nama Barang</th>
-              <th className="py-1 text-right">Qty</th>
-              <th className="py-1 text-left">Satuan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={item.id} className="border-b border-slate-200">
-                <td className="py-1">{idx + 1}</td>
-                <td className="py-1">{item.items?.kode ?? "-"}</td>
-                <td className="py-1">{item.items?.nama ?? "-"}</td>
-                <td className="py-1 text-right">{item.qty_diminta}</td>
-                <td className="py-1">{item.satuan}</td>
+        <div className="rounded-lg border-2 border-slate-800 p-4">
+          <h1 className="text-center text-lg font-bold uppercase">List Pengambilan Barang</h1>
+          <p className="mb-3 text-center text-sm font-semibold">{requestDetail.no_request}</p>
+
+          <div className="mb-3 flex justify-between text-sm">
+            <span>Cabang: {requestDetail.branches?.nama ?? "-"}</span>
+            {lantai && <span className="font-semibold">{lantai}</span>}
+          </div>
+          <p className="mb-3 text-sm">
+            Tanggal: {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
+          </p>
+
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-slate-800">
+                <th className="py-1 text-left">No</th>
+                <th className="py-1 text-left">Kode</th>
+                <th className="py-1 text-left">Nama Barang</th>
+                <th className="py-1 text-right">Qty</th>
+                <th className="py-1 text-left">Satuan</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item, idx) => (
+                <tr key={item.id} className="border-b border-slate-200">
+                  <td className="py-1">{idx + 1}</td>
+                  <td className="py-1">{item.items?.kode ?? "-"}</td>
+                  <td className="py-1">{item.items?.nama ?? "-"}</td>
+                  <td className="py-1 text-right">{item.qty_diminta}</td>
+                  <td className="py-1">{item.satuan}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        <div className="mt-8 text-sm">
-          <p>Petugas: ___________________</p>
+          <div className="mt-8 text-sm">
+            <p>Petugas: ___________________</p>
+          </div>
+          <p className="mt-6 text-center text-xs text-slate-400">--- Terima kasih ---</p>
         </div>
-        <p className="mt-6 text-center text-xs text-slate-400">--- Terima kasih ---</p>
       </div>
-    </div>
+    </>
   );
 }

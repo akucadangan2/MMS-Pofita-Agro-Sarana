@@ -68,6 +68,10 @@ export default async function BarangGudangPage({
           <input name="kategori" className="rounded-lg border px-3 py-2 text-sm" />
         </div>
         <div>
+          <label className="mb-1 block text-xs font-medium text-slate-500">Merek</label>
+          <input name="merek" className="rounded-lg border px-3 py-2 text-sm" />
+        </div>
+        <div>
           <label className="mb-1 block text-xs text-slate-500">Satuan Dasar</label>
           <input name="satuanDasar" required placeholder="PCS" className="w-24 rounded-lg border px-3 py-2 text-sm" />
         </div>
@@ -118,6 +122,9 @@ export default async function BarangGudangPage({
                   </Link>
                   <Link href={`/gudang/barang/${item.id}/satuan`} className="text-xs text-blue-600 hover:underline">
                     Satuan
+                  </Link>
+                  <Link href={`/gudang/barang/${item.id}/lokasi`} className="text-xs text-blue-600 hover:underline">
+                    Lokasi
                   </Link>
                   <form action={hapusBarang} className="inline">
                     <input type="hidden" name="id" value={item.id} />
