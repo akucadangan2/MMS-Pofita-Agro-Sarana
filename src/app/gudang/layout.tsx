@@ -14,18 +14,21 @@ import {
 import { AppShell } from "@/components/ui/AppShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { RealtimeRefresher } from "@/components/ui/RealtimeRefresher";
+import { BrowserNotifier } from "@/components/ui/BrowserNotifier";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function GudangLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
 
-  const [userResult, badgeResult] = await Promise.allSettled([
+  const [userResult, badgeRequestResult, badgePickingResult] = await Promise.allSettled([
     supabase.auth.getUser(),
     supabase.from("requests").select("*", { count: "exact", head: true }).eq("status", "baru"),
+    supabase.from("request_items").select("*", { count: "exact", head: true }).neq("status", "terambil"),
   ]);
 
   const user = userResult.status === "fulfilled" ? userResult.value.data.user : null;
-  const totalBaru = badgeResult.status === "fulfilled" ? badgeResult.value.count ?? 0 : 0;
+  const totalBaru = badgeRequestResult.status === "fulfilled" ? badgeRequestResult.value.count ?? 0 : 0;
+  const totalPicking = badgePickingResult.status === "fulfilled" ? badgePickingResult.value.count ?? 0 : 0;
 
   let nama = "Staff Gudang";
   if (user) {
@@ -36,7 +39,7 @@ export default async function GudangLayout({ children }: { children: React.React
   const menuGudang = [
     { label: "Dashboard", href: "/gudang/dashboard", icon: <LayoutDashboard /> },
     { label: "Request Masuk", href: "/gudang/request", icon: <Inbox />, badge: totalBaru },
-    { label: "Picking", href: "/gudang/picking", icon: <ClipboardList /> },
+    { label: "Picking", href: "/gudang/picking", icon: <ClipboardList />, badge: totalPicking },
     { label: "Riwayat Picking", href: "/gudang/riwayat-picking", icon: <History /> },
     { label: "Stok", href: "/gudang/stok", icon: <Package /> },
     { label: "Barang", href: "/gudang/barang", icon: <Boxes /> },
@@ -50,6 +53,7 @@ export default async function GudangLayout({ children }: { children: React.React
   return (
     <>
       <RealtimeRefresher table="requests" />
+      <BrowserNotifier />
       <AppShell title="Gudang" items={menuGudang} topBar={<TopBar nama={nama} />}>
         {children}
       </AppShell>
