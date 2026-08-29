@@ -15,6 +15,16 @@ type RequestInfo = {
   branches: { nama: string } | null;
 };
 
+type RequestItemRow = {
+  request_id: string;
+  item_id: string;
+};
+
+type ItemLocationRow = {
+  item_id: string;
+  locations: { lantai: string } | null;
+};
+
 export default async function RiwayatPickingPage() {
   const supabase = await createClient();
 
@@ -37,8 +47,38 @@ export default async function RiwayatPickingPage() {
       .in("id", requestIds);
     requestsInfo = (data as unknown as RequestInfo[]) ?? [];
   }
-
   const petaRequest = new Map(requestsInfo.map((r) => [r.id, r]));
+
+  let requestItemsData: RequestItemRow[] = [];
+  if (requestIds.length > 0) {
+    const { data } = await supabase
+      .from("request_items")
+      .select("request_id, item_id")
+      .in("request_id", requestIds);
+    requestItemsData = (data as RequestItemRow[]) ?? [];
+  }
+
+  const semuaItemIds = Array.from(new Set(requestItemsData.map((r) => r.item_id)));
+  const lantaiPerItem = new Map<string, string>();
+  if (semuaItemIds.length > 0) {
+    const { data: locData } = await supabase
+      .from("item_locations")
+      .select("item_id, locations(lantai)")
+      .in("item_id", semuaItemIds);
+    for (const l of (locData as unknown as ItemLocationRow[]) ?? []) {
+      if (!lantaiPerItem.has(l.item_id) && l.locations?.lantai) {
+        lantaiPerItem.set(l.item_id, l.locations.lantai);
+      }
+    }
+  }
+
+  const lantaiPerRequest = new Map<string, Set<string>>();
+  for (const ri of requestItemsData) {
+    const lantai = lantaiPerItem.get(ri.item_id) ?? "Tanpa Lokasi";
+    const set = lantaiPerRequest.get(ri.request_id) ?? new Set<string>();
+    set.add(lantai);
+    lantaiPerRequest.set(ri.request_id, set);
+  }
 
   const rekapMap = new Map<string, { totalItem: number; totalQty: number; waktuTerakhir: string }>();
   for (const m of movements) {
@@ -54,6 +94,7 @@ export default async function RiwayatPickingPage() {
     .map(([requestId, rekap]) => ({
       requestId,
       info: petaRequest.get(requestId),
+      daftarLantai: Array.from(lantaiPerRequest.get(requestId) ?? []).sort(),
       ...rekap,
     }))
     .sort((a, b) => new Date(b.waktuTerakhir).getTime() - new Date(a.waktuTerakhir).getTime());
@@ -74,6 +115,7 @@ export default async function RiwayatPickingPage() {
               <th className="px-4 py-3 font-medium">Tanggal</th>
               <th className="px-4 py-3 font-medium">Total Item</th>
               <th className="px-4 py-3 font-medium">Total Qty Diambil</th>
+              <th className="px-4 py-3 font-medium">Print</th>
             </tr>
           </thead>
           <tbody>
@@ -90,11 +132,21 @@ export default async function RiwayatPickingPage() {
                 </td>
                 <td className="px-4 py-3">{d.totalItem} item</td>
                 <td className="px-4 py-3 font-medium">{d.totalQty}</td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {d.daftarLantai.map((lantai) => {
+                      const linkPrint = "/print/request/" + d.requestId + "?lantai=" + encodeURIComponent(lantai);
+                      return (
+                        <a key={lantai} href={linkPrint} target="_blank" className="rounded border border-blue-600 px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50">🖨 {lantai}</a>
+                      );
+                    })}
+                  </div>
+                </td>
               </tr>
             ))}
             {daftar.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                   Belum ada riwayat picking.
                 </td>
               </tr>
