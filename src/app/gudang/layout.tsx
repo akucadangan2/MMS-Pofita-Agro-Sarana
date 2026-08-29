@@ -29,14 +29,22 @@ export default async function GudangLayout({ children }: { children: React.React
     if (data?.nama) nama = data.nama;
   }
 
-  const { count: totalBaru } = await supabase
-    .from("requests")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "baru");
+  // Query badge dibungkus try/catch — kalau ini gagal (misal Supabase lagi lemot),
+  // jangan sampai bikin seluruh halaman Gudang blank, badge-nya cukup nampilin 0.
+  let totalBaru = 0;
+  try {
+    const { count } = await supabase
+      .from("requests")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "baru");
+    totalBaru = count ?? 0;
+  } catch {
+    totalBaru = 0;
+  }
 
   const menuGudang = [
     { label: "Dashboard", href: "/gudang/dashboard", icon: <LayoutDashboard /> },
-    { label: "Request Masuk", href: "/gudang/request", icon: <Inbox />, badge: totalBaru ?? 0 },
+    { label: "Request Masuk", href: "/gudang/request", icon: <Inbox />, badge: totalBaru },
     { label: "Picking", href: "/gudang/picking", icon: <ClipboardList /> },
     { label: "Riwayat Picking", href: "/gudang/riwayat-picking", icon: <History /> },
     { label: "Stok", href: "/gudang/stok", icon: <Package /> },
