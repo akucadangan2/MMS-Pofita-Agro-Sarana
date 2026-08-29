@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { RealtimeRefresher } from "@/components/ui/RealtimeRefresher";
 import { RequestMasukTable } from "@/components/tables/RequestMasukTable";
 import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
@@ -76,7 +75,6 @@ export default async function RequestMasukPage({
 
   return (
     <div>
-      <RealtimeRefresher table="requests" />
       <h1 className="mb-1 text-2xl font-semibold text-slate-800">Request Masuk</h1>
       <p className="mb-4 text-sm text-slate-500">Daftar permintaan barang dari semua cabang</p>
 

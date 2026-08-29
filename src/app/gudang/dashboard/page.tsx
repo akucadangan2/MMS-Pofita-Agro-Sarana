@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { RealtimeRefresher } from "@/components/ui/RealtimeRefresher";
 import { TrenRequestChart } from "@/components/charts/TrenRequestChart";
 import { TopBarangChart } from "@/components/charts/TopBarangChart";
 import {
@@ -65,7 +64,6 @@ export default async function DashboardGudangPage() {
 
   return (
     <div className="min-h-full bg-slate-50/50">
-      <RealtimeRefresher table="requests" />
 
       <div className="space-y-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
