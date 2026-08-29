@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CheckboxTerambil } from "@/components/ui/CheckboxTerambil";
 
 type ItemRow = {
   id: string;
@@ -20,13 +21,9 @@ type LantaiGroup = {
 export function DetailRequestLantaiTabs({
   requestId,
   groups,
-  onTandaiTerambil,
-  onBatalkan,
 }: {
   requestId: string;
   groups: LantaiGroup[];
-  onTandaiTerambil: (formData: FormData) => void;
-  onBatalkan: (formData: FormData) => void;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
   const aktif = groups[activeIndex];
@@ -66,8 +63,7 @@ export function DetailRequestLantaiTabs({
               <th className="px-4 py-3 font-medium">Nama Barang</th>
               <th className="px-4 py-3 font-medium">Diminta</th>
               <th className="px-4 py-3 font-medium">Terambil</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Aksi</th>
+              <th className="px-4 py-3 text-center font-medium">Sudah Diambil</th>
             </tr>
           </thead>
           <tbody>
@@ -77,26 +73,13 @@ export function DetailRequestLantaiTabs({
                 <td className="px-4 py-3">{item.items?.nama ?? "(barang tidak ditemukan)"}</td>
                 <td className="px-4 py-3">{item.qty_diminta} {item.satuan}</td>
                 <td className="px-4 py-3">{item.qty_terambil} {item.satuan}</td>
-                <td className="px-4 py-3">{item.status}</td>
-                <td className="px-4 py-3">
-                  {item.status === "terambil" ? (
-                    <form action={onBatalkan}>
-                      <input type="hidden" name="itemId" value={item.id} />
-                      <input type="hidden" name="requestId" value={requestId} />
-                      <button type="submit" className="rounded border border-red-600 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50">
-                        Batalkan
-                      </button>
-                    </form>
-                  ) : (
-                    <form action={onTandaiTerambil}>
-                      <input type="hidden" name="itemId" value={item.id} />
-                      <input type="hidden" name="requestId" value={requestId} />
-                      <input type="hidden" name="qtyDiminta" value={item.qty_diminta} />
-                      <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
-                        Tandai Terambil
-                      </button>
-                    </form>
-                  )}
+                <td className="px-4 py-3 text-center">
+                  <CheckboxTerambil
+                    itemId={item.id}
+                    requestId={requestId}
+                    qtyDiminta={item.qty_diminta}
+                    sudahTerambil={item.status === "terambil"}
+                  />
                 </td>
               </tr>
             ))}

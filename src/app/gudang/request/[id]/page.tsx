@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PrintButton } from "@/components/ui/PrintButton";
-import { ukuranFontKeCss } from "@/lib/strukFont";
+import { ActivityTimeline } from "@/components/ui/ActivityTimeline";
+import { DetailRequestLantaiTabs } from "@/components/tables/DetailRequestLantaiTabs";
 
 type RequestDetail = {
   id: string;
   no_request: string;
+  status: string;
   dibuat_at: string;
   branches: { nama: string } | null;
 };
@@ -25,39 +26,23 @@ type ItemLocationRow = {
   locations: { lantai: string } | null;
 };
 
-type Pengaturan = {
-  nama_perusahaan: string;
-  footer_text: string;
-  ukuran_kertas: string;
-  ukuran_font: string;
-  catatan_tambahan: string | null;
-  tampilkan_logo: boolean;
+type MovementLog = {
+  id: string;
+  tipe: string;
+  qty: number;
+  satuan: string;
+  ref_tipe: string | null;
+  created_at: string;
+  items: { nama: string } | null;
 };
 
-export default async function PrintRequestPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ id: string }>;
-  searchParams: Promise<{ lantai?: string }>;
-}) {
+export default async function DetailRequestPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { lantai } = await searchParams;
   const supabase = await createClient();
-
-  const { data: pengaturanData } = await supabase.from("pengaturan_struk").select("*").eq("id", 1).maybeSingle();
-  const pengaturan = (pengaturanData as Pengaturan) ?? {
-    nama_perusahaan: "CV Profita Agro Sarana",
-    footer_text: "Terima kasih",
-    ukuran_kertas: "80mm",
-    ukuran_font: "sedang",
-    catatan_tambahan: null,
-    tampilkan_logo: true,
-  };
 
   const { data: request } = await supabase
     .from("requests")
-    .select("id, no_request, dibuat_at, branches(nama)")
+    .select("id, no_request, status, dibuat_at, branches(nama)")
     .eq("id", id)
     .single();
 
@@ -69,8 +54,13 @@ export default async function PrintRequestPage({
     .select("id, item_id, qty_diminta, qty_terambil, satuan, status, items(kode, nama)")
     .eq("request_id", id);
 
-  const allItems = (itemsData as unknown as ItemRow[]) ?? [];
-  const itemIds = allItems.map((i) => i.item_id);
+  const items = (itemsData as unknown as ItemRow[]) ?? [];
+  const itemIds = items.map((i) => i.item_id);
+
+  const totalBarang = items.length;
+  const totalQtyDiminta = items.reduce((s, i) => s + i.qty_diminta, 0);
+  const totalQtyTerambil = items.reduce((s, i) => s + i.qty_terambil, 0);
+  const progress = totalQtyDiminta > 0 ? Math.round((totalQtyTerambil / totalQtyDiminta) * 100) : 0;
 
   const lantaiPerItem = new Map<string, string>();
   if (itemIds.length > 0) {
@@ -78,6 +68,7 @@ export default async function PrintRequestPage({
       .from("item_locations")
       .select("item_id, locations(lantai)")
       .in("item_id", itemIds);
+
     const locRows = (locData as unknown as ItemLocationRow[]) ?? [];
     for (const l of locRows) {
       if (!lantaiPerItem.has(l.item_id) && l.locations?.lantai) {
@@ -86,66 +77,75 @@ export default async function PrintRequestPage({
     }
   }
 
-  const items = lantai
-    ? allItems.filter((i) => (lantaiPerItem.get(i.item_id) ?? "Tanpa Lokasi") === lantai)
-    : allItems;
+  const grupPerLantai = new Map<string, ItemRow[]>();
+  for (const item of items) {
+    const lantai = lantaiPerItem.get(item.item_id) ?? "Tanpa Lokasi";
+    const arr = grupPerLantai.get(lantai) ?? [];
+    arr.push(item);
+    grupPerLantai.set(lantai, arr);
+  }
+  const daftarLantai = Array.from(grupPerLantai.keys()).sort();
+  const grupArray = daftarLantai.map((lantai) => ({
+    lantai,
+    items: grupPerLantai.get(lantai)!,
+  }));
 
-  const lebarKertas = pengaturan.ukuran_kertas;
-  const ukuranFontCss = ukuranFontKeCss(pengaturan.ukuran_font);
+  const { data: movementsData } = await supabase
+    .from("stock_movements")
+    .select("id, tipe, qty, satuan, ref_tipe, created_at, items(nama)")
+    .eq("ref_id", id)
+    .order("created_at", { ascending: true });
+
+  const movements = (movementsData as unknown as MovementLog[]) ?? [];
+
+  const aktivitas = [
+    {
+      waktu: requestDetail.dibuat_at,
+      teks: "Request dibuat oleh " + (requestDetail.branches?.nama ?? "Cabang"),
+    },
+    ...movements.map((m) => ({
+      waktu: m.created_at,
+      teks:
+        m.ref_tipe === "batal_pengambilan"
+          ? "Pengambilan " + (m.items?.nama ?? "barang") + " dibatalkan (" + m.qty + " " + m.satuan + ")"
+          : (m.items?.nama ?? "Barang") + " diambil (" + m.qty + " " + m.satuan + ")",
+    })),
+  ].sort((a, b) => new Date(a.waktu).getTime() - new Date(b.waktu).getTime());
 
   return (
-    <div className="mx-auto p-6 print:p-0" style={{ maxWidth: lebarKertas }}>
-      <style>{`@media print { @page { size: ${lebarKertas} auto; margin: 4mm; } }`}</style>
-      <div className="mb-4 flex justify-end print:hidden">
-        <PrintButton />
+    <div>
+      <h1 className="mb-1 text-2xl font-semibold text-slate-800">{requestDetail.no_request}</h1>
+      <p className="mb-4 text-sm text-slate-500">
+        {requestDetail.branches?.nama ?? "-"} • {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
+      </p>
+
+      <div className="mb-6 grid grid-cols-3 gap-4">
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-2xl font-bold text-slate-800">{totalBarang}</p>
+          <p className="text-xs text-slate-500">Total Barang</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-2xl font-bold text-slate-800">{totalQtyDiminta}</p>
+          <p className="text-xs text-slate-500">Total Qty</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-2xl font-bold text-blue-600">{progress}%</p>
+          <p className="text-xs text-slate-500">Progress</p>
+        </div>
       </div>
 
-      <div className="rounded-lg border-2 border-slate-800 p-4" style={{ fontSize: ukuranFontCss }}>
-        {pengaturan.tampilkan_logo && (
-          <img src="/logo.png" alt="Logo" className="mx-auto mb-2 h-12 w-12 object-contain" />
-        )}
-        <p className="text-center text-sm font-bold">{pengaturan.nama_perusahaan}</p>
-        <h1 className="text-center text-base font-bold uppercase">List Pengambilan Barang</h1>
-        <p className="mb-3 text-center text-sm font-semibold">{requestDetail.no_request}</p>
-
-        <div className="mb-3 flex justify-between text-sm">
-          <span>Cabang: {requestDetail.branches?.nama ?? "-"}</span>
-          {lantai && <span className="font-semibold">{lantai}</span>}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          {grupArray.length > 0 ? (
+            <DetailRequestLantaiTabs requestId={id} groups={grupArray} />
+          ) : (
+            <p className="text-center text-slate-400">Tidak ada barang di request ini.</p>
+          )}
         </div>
-        <p className="mb-3 text-sm">
-          Tanggal: {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
-        </p>
 
-        <table className="w-full border-collapse text-sm">
-          <thead>
-            <tr className="border-b border-slate-800">
-              <th className="py-1 text-left">No</th>
-              <th className="py-1 text-left">Kode</th>
-              <th className="py-1 text-left">Nama Barang</th>
-              <th className="py-1 text-right">Qty</th>
-              <th className="py-1 text-left">Satuan</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, idx) => (
-              <tr key={item.id} className="border-b border-slate-200">
-                <td className="py-1">{idx + 1}</td>
-                <td className="py-1">{item.items?.kode ?? "-"}</td>
-                <td className="py-1">{item.items?.nama ?? "-"}</td>
-                <td className="py-1 text-right">{item.qty_diminta}</td>
-                <td className="py-1">{item.satuan}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {pengaturan.catatan_tambahan && (
-          <p className="mt-3 text-center italic text-slate-600">{pengaturan.catatan_tambahan}</p>
-        )}
-        <div className="mt-8 text-sm">
-          <p>Petugas: ___________________</p>
+        <div>
+          <ActivityTimeline aktivitas={aktivitas} />
         </div>
-        <p className="mt-6 text-center text-xs text-slate-400">--- {pengaturan.footer_text} ---</p>
       </div>
     </div>
   );

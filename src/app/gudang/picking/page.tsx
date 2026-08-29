@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { tandaiTerambilDariPicking } from "./actions";
+import { CheckboxTerambil } from "@/components/ui/CheckboxTerambil";
 import Link from "next/link";
 
 type PickingRow = {
@@ -83,12 +83,12 @@ export default async function PickingPage({
         const itemsLantai = grup.get(lantai)!;
         return (
           <div key={lantai} className="mb-8">
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-slate-700">
-              {lantai} <span className="text-sm text-slate-400">({itemsLantai.length} item)</span>
-            </h2>
-            <a href={"/print/picking?lantai=" + encodeURIComponent(lantai)} target="_blank" className="rounded border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50">🖨 Print Lantai Ini</a>
-          </div>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-lg font-medium text-slate-700">
+                {lantai} <span className="text-sm text-slate-400">({itemsLantai.length} item)</span>
+              </h2>
+              <a href={"/print/picking?lantai=" + encodeURIComponent(lantai)} target="_blank" className="rounded border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50">🖨 Print Lantai Ini</a>
+            </div>
             <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-500">
@@ -99,7 +99,7 @@ export default async function PickingPage({
                     <th className="px-4 py-3 font-medium">Nama Barang</th>
                     <th className="px-4 py-3 font-medium">Kategori</th>
                     <th className="px-4 py-3 font-medium">Qty</th>
-                    <th className="px-4 py-3 font-medium">Aksi</th>
+                    <th className="px-4 py-3 text-center font-medium">Sudah Diambil</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,15 +111,13 @@ export default async function PickingPage({
                       <td className="px-4 py-3">{r.items?.nama ?? "-"}</td>
                       <td className="px-4 py-3 text-slate-500">{r.items?.kategori ?? "-"}</td>
                       <td className="px-4 py-3">{r.qty_diminta} {r.satuan}</td>
-                      <td className="px-4 py-3">
-                        <form action={tandaiTerambilDariPicking}>
-                          <input type="hidden" name="itemId" value={r.id} />
-                          <input type="hidden" name="requestId" value={r.request_id} />
-                          <input type="hidden" name="qtyDiminta" value={r.qty_diminta} />
-                          <button type="submit" className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
-                            Tandai Terambil
-                          </button>
-                        </form>
+                      <td className="px-4 py-3 text-center">
+                        <CheckboxTerambil
+                          itemId={r.id}
+                          requestId={r.request_id}
+                          qtyDiminta={r.qty_diminta}
+                          sudahTerambil={false}
+                        />
                       </td>
                     </tr>
                   ))}
