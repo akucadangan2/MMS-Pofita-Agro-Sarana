@@ -19,27 +19,18 @@ import { createClient } from "@/lib/supabase/server";
 export default async function GudangLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [userResult, badgeResult] = await Promise.allSettled([
+    supabase.auth.getUser(),
+    supabase.from("requests").select("*", { count: "exact", head: true }).eq("status", "baru"),
+  ]);
+
+  const user = userResult.status === "fulfilled" ? userResult.value.data.user : null;
+  const totalBaru = badgeResult.status === "fulfilled" ? badgeResult.value.count ?? 0 : 0;
 
   let nama = "Staff Gudang";
   if (user) {
     const { data } = await supabase.from("users").select("nama").eq("auth_id", user.id).maybeSingle();
     if (data?.nama) nama = data.nama;
-  }
-
-  // Query badge dibungkus try/catch — kalau ini gagal (misal Supabase lagi lemot),
-  // jangan sampai bikin seluruh halaman Gudang blank, badge-nya cukup nampilin 0.
-  let totalBaru = 0;
-  try {
-    const { count } = await supabase
-      .from("requests")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "baru");
-    totalBaru = count ?? 0;
-  } catch {
-    totalBaru = 0;
   }
 
   const menuGudang = [

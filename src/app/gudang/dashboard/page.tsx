@@ -16,34 +16,26 @@ import {
 export default async function DashboardGudangPage() {
   const supabase = await createClient();
 
-  // ============================================================
-  // SUMMARY
-  // ============================================================
+  const mulai = new Date();
+  mulai.setDate(mulai.getDate() - 13);
+  mulai.setHours(0, 0, 0, 0);
 
-  const { data: requestsData } = await supabase.from("requests").select("status");
-  const requests = requestsData ?? [];
+  // 4 query ini gak saling ketergantungan, jadi dijalankan bareng (Promise.all)
+  // biar total waktu tunggu = query yang paling lama, bukan jumlah semuanya.
+  const [requestsRes, totalBarangRes, requestsTrenRes, itemsTrenRes] = await Promise.all([
+    supabase.from("requests").select("status"),
+    supabase.from("items").select("*", { count: "exact", head: true }),
+    supabase.from("requests").select("dibuat_at").gte("dibuat_at", mulai.toISOString()),
+    supabase.from("request_items").select("qty_diminta, items(nama)"),
+  ]);
+
+  const requests = requestsRes.data ?? [];
+  const totalBarang = totalBarangRes.count;
 
   const totalRequest = requests.length;
   const baru = requests.filter((r) => r.status === "baru").length;
   const sedangDiambil = requests.filter((r) => r.status === "sedang_diambil").length;
   const selesai = requests.filter((r) => r.status === "selesai").length;
-
-  const { count: totalBarang } = await supabase
-    .from("items")
-    .select("*", { count: "exact", head: true });
-
-  // ============================================================
-  // TREN REQUEST (14 HARI)
-  // ============================================================
-
-  const mulai = new Date();
-  mulai.setDate(mulai.getDate() - 13);
-  mulai.setHours(0, 0, 0, 0);
-
-  const { data: requestsTren } = await supabase
-    .from("requests")
-    .select("dibuat_at")
-    .gte("dibuat_at", mulai.toISOString());
 
   const petaTanggal = new Map<string, number>();
   for (let i = 0; i < 14; i++) {
@@ -52,7 +44,7 @@ export default async function DashboardGudangPage() {
     const key = d.toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
     petaTanggal.set(key, 0);
   }
-  for (const r of requestsTren ?? []) {
+  for (const r of requestsTrenRes.data ?? []) {
     const key = new Date(r.dibuat_at).toLocaleDateString("id-ID", { day: "2-digit", month: "short" });
     if (petaTanggal.has(key)) {
       petaTanggal.set(key, (petaTanggal.get(key) ?? 0) + 1);
@@ -60,14 +52,8 @@ export default async function DashboardGudangPage() {
   }
   const dataTren = Array.from(petaTanggal.entries()).map(([tanggal, jumlah]) => ({ tanggal, jumlah }));
 
-  // ============================================================
-  // TOP 5 BARANG
-  // ============================================================
-
-  const { data: itemsTren } = await supabase.from("request_items").select("qty_diminta, items(nama)");
-
   const petaBarang = new Map<string, number>();
-  for (const i of (itemsTren as unknown as { qty_diminta: number; items: { nama: string } | null }[]) ?? []) {
+  for (const i of (itemsTrenRes.data as unknown as { qty_diminta: number; items: { nama: string } | null }[]) ?? []) {
     const nama = i.items?.nama;
     if (!nama) continue;
     petaBarang.set(nama, (petaBarang.get(nama) ?? 0) + i.qty_diminta);
@@ -77,18 +63,11 @@ export default async function DashboardGudangPage() {
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
 
-  // ============================================================
-  // DASHBOARD
-  // ============================================================
-
   return (
     <div className="min-h-full bg-slate-50/50">
       <RealtimeRefresher table="requests" />
 
       <div className="space-y-6">
-        {/* ======================================================
-            HEADER
-        ====================================================== */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="mb-1 flex items-center gap-2">
@@ -111,9 +90,6 @@ export default async function DashboardGudangPage() {
           </div>
         </div>
 
-        {/* ======================================================
-            SUMMARY CARDS
-        ====================================================== */}
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
           <KartuRingkasan label="Total Request" nilai={totalRequest} icon={Inbox} iconStyle="bg-blue-50 text-blue-600" />
           <KartuRingkasan label="Baru" nilai={baru} icon={FileText} iconStyle="bg-slate-100 text-slate-600" />
@@ -122,11 +98,7 @@ export default async function DashboardGudangPage() {
           <KartuRingkasan label="Total Jenis Barang" nilai={totalBarang ?? 0} icon={Package} iconStyle="bg-indigo-50 text-indigo-600" />
         </div>
 
-        {/* ======================================================
-            CHART SECTION
-        ====================================================== */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          {/* Tren Request */}
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
@@ -142,7 +114,6 @@ export default async function DashboardGudangPage() {
             </div>
           </div>
 
-          {/* Top Barang */}
           <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
@@ -159,9 +130,6 @@ export default async function DashboardGudangPage() {
           </div>
         </div>
 
-        {/* ======================================================
-            SYSTEM INFO
-        ====================================================== */}
         <div className="rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
@@ -184,10 +152,6 @@ export default async function DashboardGudangPage() {
     </div>
   );
 }
-
-// ====================================================================
-// SUMMARY CARD
-// ====================================================================
 
 function KartuRingkasan({
   label,
