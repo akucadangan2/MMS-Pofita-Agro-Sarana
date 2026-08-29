@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Pagination } from "@/components/ui/Pagination";
-import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
+import { PrintButton } from "@/components/ui/PrintButton";
 
 type RequestRow = {
   id: string;
@@ -15,31 +14,35 @@ type ItemRow = {
   items: { kode: string; nama: string } | null;
 };
 
-function awalBulanIni() {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-}
+type Pengaturan = {
+  nama_perusahaan: string;
+  footer_text: string;
+  ukuran_kertas: string;
+  tampilkan_logo: boolean;
+};
 
-function hariIni() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-export default async function LaporanGudangPage({
+export default async function PrintLaporanGudangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ dari?: string; sampai?: string; q?: string; halaman?: string; ukuran?: string }>;
+  searchParams: Promise<{ dari?: string; sampai?: string; operator?: string; supervisor?: string }>;
 }) {
   const params = await searchParams;
-  const dari = params.dari || awalBulanIni();
-  const sampai = params.sampai || hariIni();
-  const q = params.q ?? "";
-  const ukuran = params.ukuran ?? "20";
-  const halaman = Math.max(1, Number(params.halaman) || 1);
-  const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
+  const dari = params.dari ?? "";
+  const sampai = params.sampai ?? "";
+  const operator = params.operator ?? "";
+  const supervisor = params.supervisor ?? "";
 
   const supabase = await createClient();
 
-  const { data: requestsData, error } = await supabase
+  const { data: pengaturanData } = await supabase.from("pengaturan_struk").select("*").eq("id", 1).maybeSingle();
+  const pengaturan = (pengaturanData as Pengaturan) ?? {
+    nama_perusahaan: "CV Profita Agro Sarana",
+    footer_text: "Terima kasih",
+    ukuran_kertas: "80mm",
+    tampilkan_logo: true,
+  };
+
+  const { data: requestsData } = await supabase
     .from("requests")
     .select("id, branch_id, dibuat_at")
     .gte("dibuat_at", dari)
@@ -64,126 +67,91 @@ export default async function LaporanGudangPage({
   const rekapMap = new Map<string, { kode: string; nama: string; qty: number; satuan: string }>();
   for (const i of items) {
     if (!i.items) continue;
-    const key = i.items.kode;
-    const existing = rekapMap.get(key);
+    const existing = rekapMap.get(i.items.kode);
     if (existing) {
       existing.qty += i.qty_terambil;
     } else {
-      rekapMap.set(key, { kode: i.items.kode, nama: i.items.nama, qty: i.qty_terambil, satuan: i.satuan });
+      rekapMap.set(i.items.kode, { kode: i.items.kode, nama: i.items.nama, qty: i.qty_terambil, satuan: i.satuan });
     }
   }
-  let rekap = Array.from(rekapMap.values()).sort((a, b) => b.qty - a.qty);
+  const rekap = Array.from(rekapMap.values()).sort((a, b) => b.qty - a.qty);
   const totalJenisBarang = rekap.length;
 
-  if (q) {
-    const ql = q.toLowerCase();
-    rekap = rekap.filter((r) => r.kode.toLowerCase().includes(ql) || r.nama.toLowerCase().includes(ql));
-  }
-
-  const totalHalaman = pageSize ? Math.max(1, Math.ceil(rekap.length / pageSize)) : 1;
-  const rekapDitampilkan = pageSize
-    ? rekap.slice((halaman - 1) * pageSize, (halaman - 1) * pageSize + pageSize)
-    : rekap;
-
-  const linkExportCsv = "/api/export/laporan-gudang?dari=" + dari + "&sampai=" + sampai;
-  const linkPrint = "/print/laporan-gudang?dari=" + dari + "&sampai=" + sampai;
+  const sekarang = new Date().toLocaleString("id-ID");
+  const lebarKertas = pengaturan.ukuran_kertas;
 
   return (
-    <div>
-      <h1 className="mb-4 text-2xl font-semibold text-slate-800">Laporan Pengambilan Gudang</h1>
-
-      <form method="GET" className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
-        <input type="hidden" name="q" value={q} />
-        <input type="hidden" name="ukuran" value={ukuran} />
-        <div>
-          <label className="mb-1 block text-xs text-slate-500">Dari Tanggal</label>
-          <input type="date" name="dari" defaultValue={dari} className="rounded border px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-500">Sampai Tanggal</label>
-          <input type="date" name="sampai" defaultValue={sampai} className="rounded border px-3 py-2 text-sm" />
-        </div>
-        <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Terapkan</button>
-        <a href={linkExportCsv} className="rounded border border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">⬇ Export CSV</a>
-        <a href={linkPrint} target="_blank" className="rounded border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50">🖨 Print Laporan</a>
-      </form>
-
-      {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
-
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-        <KartuRingkasan label="Total Request" nilai={totalRequest} />
-        <KartuRingkasan label="Total Cabang" nilai={totalCabang} />
-        <KartuRingkasan label="Total Jenis Barang" nilai={totalJenisBarang} />
-        <KartuRingkasan label="Total Qty Terambil" nilai={totalQty} />
+    <div className="mx-auto p-6 print:p-0" style={{ maxWidth: lebarKertas }}>
+      <style>{`@media print { @page { size: ${lebarKertas} auto; margin: 4mm; } }`}</style>
+      <div className="mb-4 flex justify-end print:hidden">
+        <PrintButton />
       </div>
 
-      <h2 className="mb-2 text-lg font-medium text-slate-700">Rekap Barang Diambil</h2>
+      <div className="rounded-lg border-2 border-slate-800 p-4 text-xs">
+        {pengaturan.tampilkan_logo && (
+          <img src="/logo.png" alt="Logo" className="mx-auto mb-2 h-12 w-12 object-contain" />
+        )}
+        <p className="text-center text-sm font-bold">{pengaturan.nama_perusahaan}</p>
+        <h1 className="text-center text-base font-bold uppercase">Laporan Pengambilan Harian Gudang</h1>
+        <p className="mb-3 text-center text-xs text-slate-500">
+          {dari} s/d {sampai}
+        </p>
 
-      <div className="mb-4 flex items-center gap-3">
-        <form method="GET" className="flex-1">
-          <input type="hidden" name="dari" value={dari} />
-          <input type="hidden" name="sampai" value={sampai} />
-          <input type="hidden" name="ukuran" value={ukuran} />
-          <input
-            type="text"
-            name="q"
-            defaultValue={q}
-            placeholder="Cari kode atau nama barang..."
-            className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </form>
-        <PageSizeSelector ukuran={ukuran} />
-      </div>
+        <div className="mb-3 border-y border-dashed border-slate-400 py-2">
+          <p className="mb-1 text-xs font-bold uppercase">Ringkasan</p>
+          <div className="flex justify-between text-sm">
+            <span>Total Request</span>
+            <span className="font-medium">{totalRequest}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Total Cabang</span>
+            <span className="font-medium">{totalCabang}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Total Jenis Barang</span>
+            <span className="font-medium">{totalJenisBarang}</span>
+          </div>
+          <div className="flex justify-between text-sm">
+            <span>Total Quantity</span>
+            <span className="font-medium">{totalQty}</span>
+          </div>
+        </div>
 
-      <div className="overflow-x-auto rounded-lg border bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Kode</th>
-              <th className="px-4 py-2">Nama Barang</th>
-              <th className="px-4 py-2">Qty Terambil</th>
+        <p className="mb-1 text-xs font-bold uppercase">Rekap Barang Diambil</p>
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-slate-800">
+              <th className="py-1 text-left">Kode</th>
+              <th className="py-1 text-left">Nama Barang</th>
+              <th className="py-1 text-right">Qty</th>
             </tr>
           </thead>
           <tbody>
-            {rekapDitampilkan.map((r) => (
-              <tr key={r.kode} className="border-t">
-                <td className="px-4 py-2">{r.kode}</td>
-                <td className="px-4 py-2">{r.nama}</td>
-                <td className="px-4 py-2">
+            {rekap.map((r) => (
+              <tr key={r.kode} className="border-b border-slate-200">
+                <td className="py-1">{r.kode}</td>
+                <td className="py-1">{r.nama}</td>
+                <td className="py-1 text-right">
                   {r.qty} {r.satuan}
                 </td>
               </tr>
             ))}
-            {rekapDitampilkan.length === 0 && (
-              <tr>
-                <td colSpan={3} className="px-4 py-6 text-center text-slate-400">
-                  {q ? "Tidak ada hasil yang cocok." : "Tidak ada data pengambilan di periode ini."}
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
+
+        <div className="mt-3 flex justify-between border-t border-dashed border-slate-400 pt-2 text-sm font-bold">
+          <span>TOTAL</span>
+          <span>{totalQty} UNIT</span>
+        </div>
+
+        <div className="mt-6 text-sm">
+          <p>Operator: {operator || "___________________"}</p>
+          <p>Supervisor: {supervisor || "___________________"}</p>
+        </div>
+
+        <p className="mt-4 text-xs text-slate-500">Dicetak: {sekarang}</p>
+        <p className="mt-6 text-center text-xs text-slate-400">--- {pengaturan.footer_text} ---</p>
       </div>
-
-      {pageSize && (
-        <Pagination
-          halamanSekarang={halaman}
-          totalHalaman={totalHalaman}
-          q={q}
-          ukuran={ukuran}
-          basePath="/gudang/laporan"
-          extraParams={{ dari, sampai }}
-        />
-      )}
-    </div>
-  );
-}
-
-function KartuRingkasan({ label, nilai }: { label: string; nilai: number }) {
-  return (
-    <div className="rounded-lg border bg-blue-50 p-4 text-blue-700">
-      <p className="text-2xl font-bold">{nilai}</p>
-      <p className="text-xs">{label}</p>
     </div>
   );
 }
