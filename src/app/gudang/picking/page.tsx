@@ -83,9 +83,12 @@ export default async function PickingPage({
         const itemsLantai = grup.get(lantai)!;
         return (
           <div key={lantai} className="mb-8">
-            <h2 className="mb-2 text-lg font-medium text-slate-700">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-lg font-medium text-slate-700">
               {lantai} <span className="text-sm text-slate-400">({itemsLantai.length} item)</span>
             </h2>
+            <a href={"/print/picking?lantai=" + encodeURIComponent(lantai)} target="_blank" className="rounded border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50">🖨 Print Lantai Ini</a>
+          </div>
             <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 text-left text-slate-500">
