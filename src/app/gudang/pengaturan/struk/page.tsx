@@ -6,6 +6,8 @@ type Pengaturan = {
   nama_perusahaan: string;
   footer_text: string;
   ukuran_kertas: string;
+  ukuran_font: string;
+  catatan_tambahan: string | null;
   tampilkan_logo: boolean;
 };
 
@@ -23,6 +25,8 @@ export default async function PengaturanStrukPage({
     nama_perusahaan: "CV Profita Agro Sarana",
     footer_text: "Terima kasih",
     ukuran_kertas: "80mm",
+    ukuran_font: "sedang",
+    catatan_tambahan: "",
     tampilkan_logo: true,
   };
 
@@ -53,6 +57,16 @@ export default async function PengaturanStrukPage({
           />
         </div>
         <div>
+          <label className="mb-1 block text-xs text-slate-500">Catatan Tambahan (opsional)</label>
+          <textarea
+            name="catatanTambahan"
+            defaultValue={pengaturan.catatan_tambahan ?? ""}
+            rows={2}
+            placeholder="Contoh: Barang yang sudah diambil tidak dapat dikembalikan"
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
           <label className="mb-1 block text-xs text-slate-500">Teks Footer</label>
           <input
             name="footerText"
@@ -61,12 +75,22 @@ export default async function PengaturanStrukPage({
             className="w-full rounded-lg border px-3 py-2 text-sm"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-slate-500">Ukuran Kertas</label>
-          <select name="ukuranKertas" defaultValue={pengaturan.ukuran_kertas} className="w-full rounded-lg border px-3 py-2 text-sm">
-            <option value="58mm">58mm</option>
-            <option value="80mm">80mm</option>
-          </select>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">Ukuran Kertas</label>
+            <select name="ukuranKertas" defaultValue={pengaturan.ukuran_kertas} className="w-full rounded-lg border px-3 py-2 text-sm">
+              <option value="58mm">58mm</option>
+              <option value="80mm">80mm</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-slate-500">Ukuran Font</label>
+            <select name="ukuranFont" defaultValue={pengaturan.ukuran_font} className="w-full rounded-lg border px-3 py-2 text-sm">
+              <option value="kecil">Kecil</option>
+              <option value="sedang">Sedang</option>
+              <option value="besar">Besar</option>
+            </select>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <input

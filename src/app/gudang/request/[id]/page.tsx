@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PrintButton } from "@/components/ui/PrintButton";
+import { ukuranFontKeCss } from "@/lib/strukFont";
 
 type RequestDetail = {
   id: string;
@@ -28,6 +29,8 @@ type Pengaturan = {
   nama_perusahaan: string;
   footer_text: string;
   ukuran_kertas: string;
+  ukuran_font: string;
+  catatan_tambahan: string | null;
   tampilkan_logo: boolean;
 };
 
@@ -47,6 +50,8 @@ export default async function PrintRequestPage({
     nama_perusahaan: "CV Profita Agro Sarana",
     footer_text: "Terima kasih",
     ukuran_kertas: "80mm",
+    ukuran_font: "sedang",
+    catatan_tambahan: null,
     tampilkan_logo: true,
   };
 
@@ -86,6 +91,7 @@ export default async function PrintRequestPage({
     : allItems;
 
   const lebarKertas = pengaturan.ukuran_kertas;
+  const ukuranFontCss = ukuranFontKeCss(pengaturan.ukuran_font);
 
   return (
     <div className="mx-auto p-6 print:p-0" style={{ maxWidth: lebarKertas }}>
@@ -94,7 +100,7 @@ export default async function PrintRequestPage({
         <PrintButton />
       </div>
 
-      <div className="rounded-lg border-2 border-slate-800 p-4 text-xs">
+      <div className="rounded-lg border-2 border-slate-800 p-4" style={{ fontSize: ukuranFontCss }}>
         {pengaturan.tampilkan_logo && (
           <img src="/logo.png" alt="Logo" className="mx-auto mb-2 h-12 w-12 object-contain" />
         )}
@@ -133,6 +139,9 @@ export default async function PrintRequestPage({
           </tbody>
         </table>
 
+        {pengaturan.catatan_tambahan && (
+          <p className="mt-3 text-center italic text-slate-600">{pengaturan.catatan_tambahan}</p>
+        )}
         <div className="mt-8 text-sm">
           <p>Petugas: ___________________</p>
         </div>

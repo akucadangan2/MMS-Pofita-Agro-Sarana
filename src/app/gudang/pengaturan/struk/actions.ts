@@ -8,6 +8,8 @@ export async function updatePengaturanStruk(formData: FormData) {
   const namaPerusahaan = formData.get("namaPerusahaan") as string;
   const footerText = formData.get("footerText") as string;
   const ukuranKertas = formData.get("ukuranKertas") as string;
+  const ukuranFont = formData.get("ukuranFont") as string;
+  const catatanTambahan = formData.get("catatanTambahan") as string;
   const tampilkanLogo = formData.get("tampilkanLogo") === "on";
 
   const supabase = await createClient();
@@ -17,6 +19,8 @@ export async function updatePengaturanStruk(formData: FormData) {
       nama_perusahaan: namaPerusahaan,
       footer_text: footerText,
       ukuran_kertas: ukuranKertas,
+      ukuran_font: ukuranFont,
+      catatan_tambahan: catatanTambahan || null,
       tampilkan_logo: tampilkanLogo,
     })
     .eq("id", 1);
