@@ -4,6 +4,7 @@ type DeliveryRow = {
   nama_pelanggan: string;
   no_do: string | null;
   supir: string | null;
+  plat_mobil: string | null;
   delivery_items: { qty: number; satuan: string }[];
 };
 
@@ -17,6 +18,7 @@ export function BarangKeluarTable({ deliveries }: { deliveries: DeliveryRow[] })
             <th className="px-4 py-3 font-medium">Nama Pelanggan</th>
             <th className="px-4 py-3 font-medium">No DO</th>
             <th className="px-4 py-3 font-medium">Supir</th>
+            <th className="px-4 py-3 font-medium">Plat Mobil</th>
             <th className="px-4 py-3 font-medium">Jumlah Item</th>
           </tr>
         </thead>
@@ -27,12 +29,13 @@ export function BarangKeluarTable({ deliveries }: { deliveries: DeliveryRow[] })
               <td className="px-4 py-3 font-medium">{d.nama_pelanggan}</td>
               <td className="px-4 py-3">{d.no_do ?? "-"}</td>
               <td className="px-4 py-3">{d.supir ?? "-"}</td>
+              <td className="px-4 py-3">{d.plat_mobil ?? "-"}</td>
               <td className="px-4 py-3">{d.delivery_items.length} jenis barang</td>
             </tr>
           ))}
           {deliveries.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+              <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
                 Tidak ada hasil.
               </td>
             </tr>

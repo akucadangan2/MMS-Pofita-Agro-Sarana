@@ -10,6 +10,7 @@ type DeliveryRow = {
   nama_pelanggan: string;
   no_do: string | null;
   supir: string | null;
+  plat_mobil: string | null;
   delivery_items: { qty: number; satuan: string }[];
 };
 
@@ -28,10 +29,12 @@ export default async function BarangKeluarPage({
 
   let query = supabase
     .from("customer_deliveries")
-    .select("id, tanggal, nama_pelanggan, no_do, supir, delivery_items(qty, satuan)", { count: "exact" })
+    .select("id, tanggal, nama_pelanggan, no_do, supir, plat_mobil, delivery_items(qty, satuan)", {
+      count: "exact",
+    })
     .order("tanggal", { ascending: false });
 
-  if (q) query = query.or(`nama_pelanggan.ilike.%${q}%,no_do.ilike.%${q}%`);
+  if (q) query = query.or(`nama_pelanggan.ilike.%${q}%,no_do.ilike.%${q}%,plat_mobil.ilike.%${q}%`);
   if (pageSize) {
     const dari = (halaman - 1) * pageSize;
     query = query.range(dari, dari + pageSize - 1);
@@ -63,7 +66,7 @@ export default async function BarangKeluarPage({
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="Cari nama pelanggan atau no DO..."
+            placeholder="Cari nama pelanggan, no DO, atau plat mobil..."
             className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
         </form>
