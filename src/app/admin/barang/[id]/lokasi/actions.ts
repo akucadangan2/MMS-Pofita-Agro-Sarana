@@ -10,7 +10,7 @@ export async function tambahLokasiBarang(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("item_locations").insert({ item_id: itemId, location_id: locationId });
 
-  revalidatePath(`/gudang/barang/${itemId}/lokasi`);
+  revalidatePath(`/admin/barang/${itemId}/lokasi`);
 }
 
 export async function hapusLokasiBarang(formData: FormData) {
