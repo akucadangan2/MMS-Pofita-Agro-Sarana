@@ -11,7 +11,7 @@ type RequestRow = {
   status: string;
   dibuat_at: string;
   branches: { nama: string } | null;
-  request_items: { qty_diminta: number }[];
+  request_items: { item_id: string; qty_diminta: number }[];
 };
 
 const DAFTAR_STATUS = [
@@ -49,7 +49,7 @@ export default async function RequestMasukPage({
 
   let query = supabase
     .from("requests")
-    .select("id, no_request, status, dibuat_at, branches(nama), request_items(qty_diminta)", {
+    .select("id, no_request, status, dibuat_at, branches(nama), request_items(item_id, qty_diminta)", {
       count: "exact",
     })
     .order("dibuat_at", { ascending: false });
@@ -72,6 +72,18 @@ export default async function RequestMasukPage({
     p.set("status", nilaiStatus);
     return `/gudang/request?${p.toString()}`;
   }
+
+  const semuaItemId = Array.from(new Set(requests.flatMap((r) => r.request_items.map((i) => i.item_id))));
+  const { data: stockData } = await supabase.from("stock").select("item_id, qty").in("item_id", semuaItemId);
+  const stokPerItem = new Map<string, number>();
+  for (const s of stockData ?? []) {
+    stokPerItem.set(s.item_id, (stokPerItem.get(s.item_id) ?? 0) + s.qty);
+  }
+  const requestKurangStok = new Set(
+    requests
+      .filter((r) => r.request_items.some((i) => (stokPerItem.get(i.item_id) ?? 0) < i.qty_diminta))
+      .map((r) => r.id)
+  );
 
   return (
     <div>
@@ -113,6 +125,7 @@ export default async function RequestMasukPage({
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
       <RequestMasukTable requests={requests} />
+      
 
       {pageSize && (
         <Pagination halamanSekarang={halaman} totalHalaman={totalHalaman} q={q} ukuran={ukuran} basePath="/gudang/request" />

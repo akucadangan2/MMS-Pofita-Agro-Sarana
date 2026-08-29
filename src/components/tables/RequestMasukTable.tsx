@@ -10,7 +10,13 @@ type RequestRow = {
   request_items: { qty_diminta: number }[];
 };
 
-export function RequestMasukTable({ requests }: { requests: RequestRow[] }) {
+export function RequestMasukTable({
+  requests,
+  requestKurangStok,
+}: {
+  requests: RequestRow[];
+  requestKurangStok?: Set<string>;
+}) {
   return (
     <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
       <table className="w-full text-sm">
@@ -28,12 +34,18 @@ export function RequestMasukTable({ requests }: { requests: RequestRow[] }) {
           {requests.map((r) => {
             const totalBarang = r.request_items.length;
             const totalQty = r.request_items.reduce((s, i) => s + i.qty_diminta, 0);
+            const kurangStok = requestKurangStok?.has(r.id);
             return (
               <tr key={r.id} className="border-t hover:bg-slate-50">
                 <td className="px-4 py-3">
                   <Link href={`/gudang/request/${r.id}`} className="font-medium text-blue-600 hover:underline">
                     {r.no_request}
                   </Link>
+                  {kurangStok && (
+                    <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                      Stok kurang
+                    </span>
+                  )}
                 </td>
                 <td className="px-4 py-3">{r.branches?.nama ?? "-"}</td>
                 <td className="px-4 py-3 text-slate-500">{new Date(r.dibuat_at).toLocaleString("id-ID")}</td>

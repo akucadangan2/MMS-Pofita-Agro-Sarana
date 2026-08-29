@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { CheckboxTerambil } from "@/components/ui/CheckboxTerambil";
 import Link from "next/link";
+import { BadgeStokKurang } from "@/components/ui/BadgeStokKurang";
 
 type PickingRow = {
   id: string;
@@ -36,6 +37,11 @@ export default async function PickingPage({
 
   const rows = (data as unknown as PickingRow[]) ?? [];
   const itemIds = rows.map((r) => r.item_id);
+  const { data: stockData } = await supabase.from("stock").select("item_id, qty").in("item_id", itemIds);
+  const stokPerItem = new Map<string, number>();
+  for (const s of stockData ?? []) {
+    stokPerItem.set(s.item_id, (stokPerItem.get(s.item_id) ?? 0) + s.qty);
+  }
 
   const lantaiPerItem = new Map<string, string>();
   if (itemIds.length > 0) {
@@ -110,7 +116,10 @@ export default async function PickingPage({
                       <td className="px-4 py-3">{r.items?.kode ?? "-"}</td>
                       <td className="px-4 py-3">{r.items?.nama ?? "-"}</td>
                       <td className="px-4 py-3 text-slate-500">{r.items?.kategori ?? "-"}</td>
-                      <td className="px-4 py-3">{r.qty_diminta} {r.satuan}</td>
+                      <td className="px-4 py-3">
+                        {r.qty_diminta} {r.satuan}
+                        <BadgeStokKurang diminta={r.qty_diminta} tersedia={stokPerItem.get(r.item_id) ?? 0} />
+                      </td>
                       <td className="px-4 py-3 text-center">
                         <CheckboxTerambil
                           itemId={r.id}
