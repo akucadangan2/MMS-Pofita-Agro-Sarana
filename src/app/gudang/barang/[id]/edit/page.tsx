@@ -9,6 +9,7 @@ type Barang = {
   nama: string;
   kategori: string | null;
   merek: string | null;
+  barcode: string | null;
   deskripsi: string | null;
   satuan_dasar: string;
 };
@@ -19,7 +20,7 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
 
   const { data } = await supabase
     .from("items")
-    .select("id, kode, nama, kategori, merek, deskripsi, satuan_dasar")
+    .select("id, kode, nama, kategori, merek, barcode, deskripsi, satuan_dasar")
     .eq("id", id)
     .single();
 
@@ -50,6 +51,12 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
         <div>
           <label className="mb-1 block text-xs text-slate-500">Merek</label>
           <input name="merek" defaultValue={item.merek ?? ""} className="w-full rounded-lg border px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">
+            Barcode <span className="text-slate-400">(isi kalau barang ini punya barcode fisik, kosongkan kalau tidak ada)</span>
+          </label>
+          <input name="barcode" defaultValue={item.barcode ?? ""} className="w-full rounded-lg border px-3 py-2 text-sm" />
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500">Deskripsi</label>

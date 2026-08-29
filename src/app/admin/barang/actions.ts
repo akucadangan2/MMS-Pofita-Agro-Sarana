@@ -9,6 +9,7 @@ export async function tambahBarang(formData: FormData) {
   const nama = formData.get("nama") as string;
   const kategori = formData.get("kategori") as string;
   const merek = formData.get("merek") as string;
+  const barcode = formData.get("barcode") as string;
   const deskripsi = formData.get("deskripsi") as string;
   const satuanDasar = formData.get("satuanDasar") as string;
 
@@ -18,6 +19,7 @@ export async function tambahBarang(formData: FormData) {
     nama,
     kategori: kategori || null,
     merek: merek || null,
+    barcode: barcode || null,
     deskripsi: deskripsi || null,
     satuan_dasar: satuanDasar,
   });
@@ -32,6 +34,7 @@ export async function updateBarang(formData: FormData) {
   const nama = formData.get("nama") as string;
   const kategori = formData.get("kategori") as string;
   const merek = formData.get("merek") as string;
+  const barcode = formData.get("barcode") as string;
   const deskripsi = formData.get("deskripsi") as string;
   const satuanDasar = formData.get("satuanDasar") as string;
 
@@ -43,6 +46,7 @@ export async function updateBarang(formData: FormData) {
       nama,
       kategori: kategori || null,
       merek: merek || null,
+      barcode: barcode || null,
       deskripsi: deskripsi || null,
       satuan_dasar: satuanDasar,
     })
