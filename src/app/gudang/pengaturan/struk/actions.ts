@@ -13,7 +13,7 @@ export async function updatePengaturanStruk(formData: FormData) {
   const tampilkanLogo = formData.get("tampilkanLogo") === "on";
 
   const supabase = await createClient();
-  await supabase
+  const { error } = await supabase
     .from("pengaturan_struk")
     .update({
       nama_perusahaan: namaPerusahaan,
@@ -24,6 +24,10 @@ export async function updatePengaturanStruk(formData: FormData) {
       tampilkan_logo: tampilkanLogo,
     })
     .eq("id", 1);
+
+  if (error) {
+    redirect(`/gudang/pengaturan/struk?error=${encodeURIComponent(error.message)}`);
+  }
 
   revalidatePath("/gudang/pengaturan/struk");
   redirect("/gudang/pengaturan/struk?berhasil=1");

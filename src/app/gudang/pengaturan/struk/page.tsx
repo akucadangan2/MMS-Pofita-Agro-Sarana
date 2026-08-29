@@ -14,10 +14,11 @@ type Pengaturan = {
 export default async function PengaturanStrukPage({
   searchParams,
 }: {
-  searchParams: Promise<{ berhasil?: string }>;
+  searchParams: Promise<{ berhasil?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const berhasil = params.berhasil === "1";
+  const pesanError = params.error;
 
   const supabase = await createClient();
   const { data } = await supabase.from("pengaturan_struk").select("*").eq("id", 1).maybeSingle();
@@ -45,6 +46,11 @@ export default async function PengaturanStrukPage({
           ✓ Pengaturan struk berhasil disimpan.
         </div>
       )}
+      {pesanError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            Gagal menyimpan: {pesanError}
+        </div>
+        )}
 
       <form action={updatePengaturanStruk} className="max-w-lg space-y-4 rounded-xl border bg-white p-6 shadow-sm">
         <div>
