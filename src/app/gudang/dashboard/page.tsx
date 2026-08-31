@@ -10,6 +10,8 @@ import {
   Activity,
   ArrowUpRight,
   TrendingUp,
+  Boxes,
+  AlertTriangle,
 } from "lucide-react";
 
 export default async function DashboardGudangPage() {
@@ -19,13 +21,12 @@ export default async function DashboardGudangPage() {
   mulai.setDate(mulai.getDate() - 13);
   mulai.setHours(0, 0, 0, 0);
 
-  // 4 query ini gak saling ketergantungan, jadi dijalankan bareng (Promise.all)
-  // biar total waktu tunggu = query yang paling lama, bukan jumlah semuanya.
-  const [requestsRes, totalBarangRes, requestsTrenRes, itemsTrenRes] = await Promise.all([
+  const [requestsRes, totalBarangRes, requestsTrenRes, itemsTrenRes, stockRes] = await Promise.all([
     supabase.from("requests").select("status"),
     supabase.from("items").select("*", { count: "exact", head: true }),
     supabase.from("requests").select("dibuat_at").gte("dibuat_at", mulai.toISOString()),
     supabase.from("request_items").select("qty_diminta, items(nama)"),
+    supabase.from("stock").select("item_id, qty"),
   ]);
 
   const requests = requestsRes.data ?? [];
@@ -35,6 +36,24 @@ export default async function DashboardGudangPage() {
   const baru = requests.filter((r) => r.status === "baru").length;
   const sedangDiambil = requests.filter((r) => r.status === "sedang_diambil").length;
   const selesai = requests.filter((r) => r.status === "selesai").length;
+
+  // Total stok = jumlah semua qty di semua lokasi, digabung per barang dulu
+  const stockRows = stockRes.data ?? [];
+  const stokPerItem = new Map<string, number>();
+  for (const s of stockRows) {
+    stokPerItem.set(s.item_id, (stokPerItem.get(s.item_id) ?? 0) + s.qty);
+  }
+  const totalStok = stockRows.reduce((sum, s) => sum + s.qty, 0);
+
+  // Stok menipis = barang yang total stoknya di bawah stok_minimum masing-masing
+  const { data: itemsMinData } = await supabase.from("items").select("id, stok_minimum");
+  const minPerItem = new Map((itemsMinData ?? []).map((i) => [i.id, i.stok_minimum ?? 10]));
+
+  let stokMenipis = 0;
+  for (const [itemId, batas] of minPerItem) {
+    const qty = stokPerItem.get(itemId) ?? 0;
+    if (qty < batas) stokMenipis++;
+  }
 
   const petaTanggal = new Map<string, number>();
   for (let i = 0; i < 14; i++) {
@@ -64,7 +83,6 @@ export default async function DashboardGudangPage() {
 
   return (
     <div className="min-h-full bg-slate-50/50">
-
       <div className="space-y-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -88,12 +106,13 @@ export default async function DashboardGudangPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <KartuRingkasan label="Total Request" nilai={totalRequest} icon={Inbox} iconStyle="bg-blue-50 text-blue-600" />
-          <KartuRingkasan label="Baru" nilai={baru} icon={FileText} iconStyle="bg-slate-100 text-slate-600" />
           <KartuRingkasan label="Sedang Diambil" nilai={sedangDiambil} icon={Clock} iconStyle="bg-amber-50 text-amber-600" />
           <KartuRingkasan label="Selesai" nilai={selesai} icon={CheckCircle2} iconStyle="bg-emerald-50 text-emerald-600" />
           <KartuRingkasan label="Total Jenis Barang" nilai={totalBarang ?? 0} icon={Package} iconStyle="bg-indigo-50 text-indigo-600" />
+          <KartuRingkasan label="Total Stok (unit)" nilai={totalStok} icon={Boxes} iconStyle="bg-cyan-50 text-cyan-600" />
+          <KartuRingkasan label="Barang Stok Menipis" nilai={stokMenipis} icon={AlertTriangle} iconStyle="bg-red-50 text-red-600" />
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
