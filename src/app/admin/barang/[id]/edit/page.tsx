@@ -12,6 +12,7 @@ type Barang = {
   barcode: string | null;
   deskripsi: string | null;
   satuan_dasar: string;
+  stok_minimum: number | null;
 };
 
 export default async function EditBarangGudangPage({ params }: { params: Promise<{ id: string }> }) {
@@ -20,7 +21,7 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
 
   const { data } = await supabase
     .from("items")
-    .select("id, kode, nama, kategori, merek, barcode, deskripsi, satuan_dasar")
+    .select("id, kode, nama, kategori, merek, barcode, deskripsi, satuan_dasar, stok_minimum")
     .eq("id", id)
     .single();
 
@@ -70,6 +71,18 @@ export default async function EditBarangGudangPage({ params }: { params: Promise
         <div>
           <label className="mb-1 block text-xs text-slate-500">Satuan Dasar</label>
           <input name="satuanDasar" defaultValue={item.satuan_dasar} required className="w-full rounded-lg border px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">
+            Stok Minimum <span className="text-slate-400">(dianggap "menipis" kalau stok di bawah angka ini)</span>
+          </label>
+          <input
+            type="number"
+            name="stokMinimum"
+            defaultValue={item.stok_minimum ?? 10}
+            min={0}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
         </div>
         <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
           Simpan Perubahan

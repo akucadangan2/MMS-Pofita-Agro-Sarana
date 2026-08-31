@@ -37,6 +37,7 @@ export async function updateBarang(formData: FormData) {
   const barcode = formData.get("barcode") as string;
   const deskripsi = formData.get("deskripsi") as string;
   const satuanDasar = formData.get("satuanDasar") as string;
+  const stokMinimum = formData.get("stokMinimum") as string;
 
   const supabase = await createClient();
   await supabase
@@ -49,6 +50,7 @@ export async function updateBarang(formData: FormData) {
       barcode: barcode || null,
       deskripsi: deskripsi || null,
       satuan_dasar: satuanDasar,
+      stok_minimum: stokMinimum ? Number(stokMinimum) : 10,
     })
     .eq("id", id);
 
