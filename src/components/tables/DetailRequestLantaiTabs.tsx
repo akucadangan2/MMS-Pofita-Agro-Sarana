@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckboxTerambil } from "@/components/ui/CheckboxTerambil";
+import { EditQtyButton } from "@/components/ui/EditQtyButton";
 
 type ItemRow = {
   id: string;
@@ -73,6 +74,16 @@ export function DetailRequestLantaiTabs({
                 <td className="px-4 py-3">{item.items?.kode ?? "-"}</td>
                 <td className="px-4 py-3">{item.items?.nama ?? "(barang tidak ditemukan)"}</td>
                 <td className="px-4 py-3">{item.qty_diminta} {item.satuan}</td>
+                <td className="px-4 py-3">
+                  {item.status !== "terambil" && item.status !== "dibatalkan" && (
+                    <EditQtyButton
+                      itemId={item.id}
+                      requestId={requestId}
+                      qtySekarang={item.qty_diminta}
+                      satuan={item.satuan}
+                    />
+                  )}
+                </td>
                 <td className="px-4 py-3">{item.qty_terambil} {item.satuan}</td>
                 <td className="px-4 py-3 text-center">
                   <CheckboxTerambil
@@ -80,6 +91,7 @@ export function DetailRequestLantaiTabs({
                     requestId={requestId}
                     qtyDiminta={item.qty_diminta}
                     sudahTerambil={item.status === "terambil"}
+                    sudahDibatalkan={item.status === "dibatalkan"}
                   />
                 </td>
               </tr>
