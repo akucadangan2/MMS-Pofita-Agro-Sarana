@@ -112,11 +112,15 @@ export default async function PrintRequestPage({
         </p>
 
         <div className="border-t border-black">
+          <div className="grid grid-cols-[28px_1fr_auto] gap-2 border-b border-black py-1 font-bold">
+            <span>NO.</span>
+            <span>NAMA BARANG</span>
+            <span>QTY</span>
+          </div>
           {items.map((item, idx) => (
-            <div key={item.id} className="flex justify-between border-b border-dashed border-slate-300 py-1">
-              <span>
-                {idx + 1}. {item.items?.nama ?? "-"}
-              </span>
+            <div key={item.id} className="grid grid-cols-[28px_1fr_auto] gap-2 border-b border-dashed border-slate-300 py-1">
+              <span>{idx + 1}.</span>
+              <span>{item.items?.nama ?? "-"}</span>
               <span className="whitespace-nowrap font-semibold">
                 {item.qty_diminta} {item.satuan}
               </span>
