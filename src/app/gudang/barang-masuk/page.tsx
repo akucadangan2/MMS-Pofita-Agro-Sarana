@@ -2,11 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { catatBarangMasuk } from "./actions";
 import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
+import { hapusBarangMasuk } from "./actions";
 
 type Barang = { id: string; kode: string; nama: string };
 type Lokasi = { id: string; lantai: string; area: string | null; rak: string | null };
 type MovementRow = {
   id: string;
+  item_id: string;
+  location_id: string | null;
   qty: number;
   satuan: string;
   created_at: string;
@@ -37,7 +40,7 @@ export default async function BarangMasukPage({
 
   let query = supabase
     .from("stock_movements")
-    .select("id, qty, satuan, created_at, items!inner(kode, nama)", { count: "exact" })
+    .select("id, item_id, location_id, qty, satuan, created_at, items!inner(kode, nama)", { count: "exact" })
     .eq("tipe", "masuk")
     .order("created_at", { ascending: false });
 
@@ -113,35 +116,50 @@ export default async function BarangMasukPage({
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
       <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-slate-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Tanggal</th>
-              <th className="px-4 py-3 font-medium">Kode</th>
-              <th className="px-4 py-3 font-medium">Nama Barang</th>
-              <th className="px-4 py-3 font-medium">Qty Masuk</th>
+      <table className="w-full text-sm">
+        <thead className="bg-slate-50 text-left text-slate-500">
+          <tr>
+            <th className="px-4 py-3 font-medium">Tanggal</th>
+            <th className="px-4 py-3 font-medium">Kode</th>
+            <th className="px-4 py-3 font-medium">Nama Barang</th>
+            <th className="px-4 py-3 font-medium">Qty Masuk</th>
+            <th className="px-4 py-3 font-medium">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {movements.map((m) => (
+            <tr key={m.id} className="border-t hover:bg-slate-50">
+              <td className="px-4 py-3 text-slate-500">{new Date(m.created_at).toLocaleString("id-ID")}</td>
+              <td className="px-4 py-3">{m.items?.kode ?? "-"}</td>
+              <td className="px-4 py-3">{m.items?.nama ?? "-"}</td>
+              <td className="px-4 py-3 font-medium text-green-700">
+                +{m.qty} {m.satuan}
+              </td>
+              <td className="px-4 py-3 space-x-2">
+                <a href={`/gudang/barang-masuk/${m.id}/edit`} className="text-xs text-blue-600 hover:underline">
+                  Edit
+                </a>
+                <form action={hapusBarangMasuk} className="inline">
+                  <input type="hidden" name="movementId" value={m.id} />
+                  <input type="hidden" name="itemId" value={m.item_id} />
+                  <input type="hidden" name="locationId" value={m.location_id ?? ""} />
+                  <input type="hidden" name="qty" value={m.qty} />
+                  <button type="submit" className="text-xs text-red-600 hover:underline">
+                    Hapus
+                  </button>
+                </form>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {movements.map((m) => (
-              <tr key={m.id} className="border-t hover:bg-slate-50">
-                <td className="px-4 py-3 text-slate-500">{new Date(m.created_at).toLocaleString("id-ID")}</td>
-                <td className="px-4 py-3">{m.items?.kode ?? "-"}</td>
-                <td className="px-4 py-3">{m.items?.nama ?? "-"}</td>
-                <td className="px-4 py-3 font-medium text-green-700">
-                  +{m.qty} {m.satuan}
-                </td>
-              </tr>
-            ))}
-            {movements.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-slate-400">
-                  {q ? "Tidak ada hasil yang cocok." : "Belum ada catatan barang masuk."}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          ))}
+          {movements.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                {q ? "Tidak ada hasil yang cocok." : "Belum ada catatan barang masuk."}
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
       </div>
 
       {pageSize && (
