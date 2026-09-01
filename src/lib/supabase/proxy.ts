@@ -46,14 +46,13 @@ export async function updateSession(request: NextRequest) {
 
     const role = userRow?.role;
 
-    if (pathname.startsWith("/admin") && role !== "admin") {
+    if (pathname.startsWith("/admin") && role !== "admin" && role !== "super_admin") {
       const url = request.nextUrl.clone();
       url.pathname = role === "gudang" ? "/gudang/dashboard" : "/login";
       return NextResponse.redirect(url);
     }
 
-    if (pathname.startsWith("/gudang") && role !== "gudang" && role !== "admin") {
-      const url = request.nextUrl.clone();
+if (pathname.startsWith("/gudang") && role !== "gudang" && role !== "admin" && role !== "super_admin") {      const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
