@@ -26,7 +26,7 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims;
   const pathname = request.nextUrl.pathname;
-  const halamanPublik = pathname.startsWith("/login");
+  const halamanPublik = pathname.startsWith("/login") || pathname.startsWith("/kebijakan-privasi");
 
   if (!claims) {
     if (!halamanPublik) {
