@@ -32,7 +32,7 @@ export default async function PickingPage({
     .select(
       "id, request_id, item_id, qty_diminta, qty_terambil, satuan, status, items(kode, nama, kategori), requests(no_request, branches(nama))"
     )
-    .neq("status", "terambil")
+    .eq("status", "belum")
     .order("request_id");
 
   const rows = (data as unknown as PickingRow[]) ?? [];

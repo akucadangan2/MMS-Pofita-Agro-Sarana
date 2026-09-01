@@ -136,6 +136,36 @@ export async function tandaiTerambil(formData: FormData) {
   revalidatePath("/admin/barang");
 }
 
+export async function batalkanItemRequest(formData: FormData) {
+  const itemId = formData.get("itemId") as string;
+  const requestId = formData.get("requestId") as string;
+  const alasan = formData.get("alasan") as string;
+
+  const supabase = await createClient();
+
+  await supabase
+    .from("request_items")
+    .update({ status: "dibatalkan", catatan: alasan || null })
+    .eq("id", itemId);
+
+  const sisaItems = await supabase
+    .from("request_items")
+    .select("status")
+    .eq("request_id", requestId);
+
+  const semuaSelesai = (sisaItems.data ?? []).every(
+    (i) => i.status === "terambil" || i.status === "dibatalkan"
+  );
+  const adaYangTerambil = (sisaItems.data ?? []).some((i) => i.status === "terambil");
+
+  const statusBaru = semuaSelesai ? "selesai" : adaYangTerambil ? "sedang_diambil" : "baru";
+
+  await supabase.from("requests").update({ status: statusBaru }).eq("id", requestId);
+
+  revalidatePath("/gudang/picking");
+  revalidatePath(`/gudang/request/${requestId}`);
+}
+
 export async function batalkanPengambilan(formData: FormData) {
   const itemId = formData.get("itemId") as string;
   const requestId = formData.get("requestId") as string;
