@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 async function kirimNotifikasi(userId: string, judul: string, pesan: string) {
   try {
@@ -136,6 +137,7 @@ export async function tandaiTerambil(formData: FormData) {
   revalidatePath("/admin/barang");
 }
 
+
 export async function batalkanItemRequest(formData: FormData) {
   const itemId = formData.get("itemId") as string;
   const requestId = formData.get("requestId") as string;
@@ -202,4 +204,40 @@ export async function batalkanPengambilan(formData: FormData) {
   revalidatePath("/gudang/request");
   revalidatePath("/gudang/stok");
   revalidatePath("/admin/barang");
+}
+
+export async function ubahQtyRequestItem(formData: FormData) {
+  const itemId = formData.get("itemId") as string;
+  const requestId = formData.get("requestId") as string;
+  const qtyBaru = Number(formData.get("qtyBaru"));
+  
+  const supabase = await createClient();
+  
+  if (qtyBaru <= 0) {
+    redirect(`/gudang/request/${requestId}?error=${encodeURIComponent("Qty harus lebih dari 0")}`);
+  }
+  
+  await supabase.from("request_items").update({ qty_diminta: qtyBaru }).eq("id", itemId);
+  
+  revalidatePath(`/gudang/request/${requestId}`);
+  redirect(`/gudang/request/${requestId}?berhasil=1`);
+}
+
+export async function batalkanSeluruhRequest(formData: FormData) {
+  const requestId = formData.get("requestId") as string;
+  const alasan = formData.get("alasan") as string;
+  
+  const supabase = await createClient();
+  
+  await supabase
+    .from("request_items")
+    .update({ status: "dibatalkan", catatan: alasan || null })
+    .eq("request_id", requestId)
+    .neq("status", "terambil");
+    
+  await supabase.from("requests").update({ status: "dibatalkan" }).eq("id", requestId);
+  
+  revalidatePath("/gudang/request");
+  revalidatePath(`/gudang/request/${requestId}`);
+  redirect("/gudang/request?berhasil=1");
 }
