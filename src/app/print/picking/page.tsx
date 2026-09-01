@@ -72,46 +72,42 @@ export default async function PrintPickingPage({
   const ukuranFontCss = ukuranFontKeCss(pengaturan.ukuran_font);
 
   return (
-    <div className="mx-auto p-6 print:p-0" style={{ maxWidth: lebarKertas }}>
-      <style>{`@media print { @page { size: ${lebarKertas} auto; margin: 4mm; } }`}</style>
+    <div className="mx-auto p-3 print:p-0" style={{ maxWidth: lebarKertas }}>
+      <style>{`@media print { @page { size: ${lebarKertas} auto; margin: 3mm; } }`}</style>
       <div className="mb-4 flex justify-end print:hidden">
         <PrintButton />
       </div>
 
-      <div className="rounded-lg border-2 border-slate-800 p-4" style={{ fontSize: ukuranFontCss }}>
+      <div style={{ fontSize: ukuranFontCss }}>
         {pengaturan.tampilkan_logo && (
-          <img src="/logo.png" alt="Logo" className="mx-auto mb-2 h-12 w-12 object-contain" />
+          <img src="/logo.png" alt="Logo" className="mx-auto mb-1 h-12 w-12 object-contain" />
         )}
         <p className="text-center font-bold">{pengaturan.nama_perusahaan}</p>
         <h1 className="text-center font-bold uppercase">List Picking</h1>
-        {lantai && <p className="mb-1 text-center font-semibold">{lantai}</p>}
-        <p className="mb-3 text-center text-slate-500">Dicetak: {sekarang}</p>
+        {lantai && <p className="text-center font-semibold">{lantai}</p>}
+        <p className="mb-2 text-center text-slate-500">Dicetak: {sekarang}</p>
 
-        <div className="border-t border-slate-800 pt-2">
+        <div className="border-t border-black">
           {items.map((item, idx) => (
-            <div key={item.id} className="mb-2 border-b border-dashed border-slate-300 pb-2">
-              <div className="flex justify-between font-semibold">
-                <span>
-                  {idx + 1}. {item.items?.kode ?? "-"}
-                </span>
-                <span>
-                  {item.qty_diminta} {item.satuan}
-                </span>
-              </div>
-              <div>{item.items?.nama ?? "-"}</div>
-              <div className="text-slate-500">No Request: {item.requests?.no_request ?? "-"}</div>
+            <div key={item.id} className="flex justify-between border-b border-dashed border-slate-300 py-1">
+              <span>
+                {idx + 1}. {item.items?.nama ?? "-"}
+              </span>
+              <span className="whitespace-nowrap font-semibold">
+                {item.qty_diminta} {item.satuan}
+              </span>
             </div>
           ))}
           {items.length === 0 && <p className="py-4 text-center text-slate-400">Tidak ada barang.</p>}
         </div>
 
         {pengaturan.catatan_tambahan && (
-          <p className="mt-3 text-center italic text-slate-600">{pengaturan.catatan_tambahan}</p>
+          <p className="mt-2 text-center italic text-slate-600">{pengaturan.catatan_tambahan}</p>
         )}
-        <div className="mt-8">
+        <div className="mt-6">
           <p>Petugas: ___________________</p>
         </div>
-        <p className="mt-6 text-center text-slate-400">--- {pengaturan.footer_text} ---</p>
+        <p className="mt-4 text-center text-slate-400">--- {pengaturan.footer_text} ---</p>
       </div>
     </div>
   );
