@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { ActivityTimeline } from "@/components/ui/ActivityTimeline";
 import { DetailRequestLantaiTabs } from "@/components/tables/DetailRequestLantaiTabs";
-
+import { BatalkanRequestButton } from "@/components/ui/BatalkanRequestButton";
 type RequestDetail = {
   id: string;
   no_request: string;
@@ -133,6 +133,12 @@ export default async function DetailRequestPage({ params }: { params: Promise<{ 
           <p className="text-xs text-slate-500">Progress</p>
         </div>
       </div>
+
+      {requestDetail.status !== "selesai" && requestDetail.status !== "dibatalkan" && (
+        <div className="mb-6 flex justify-end">
+          <BatalkanRequestButton requestId={id} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">

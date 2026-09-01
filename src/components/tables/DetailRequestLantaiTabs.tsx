@@ -62,6 +62,7 @@ export function DetailRequestLantaiTabs({
               <th className="px-4 py-3 font-medium">Kode</th>
               <th className="px-4 py-3 font-medium">Nama Barang</th>
               <th className="px-4 py-3 font-medium">Diminta</th>
+              <th className="px-4 py-3 font-medium">Aksi Diminta</th>
               <th className="px-4 py-3 font-medium">Terambil</th>
               <th className="px-4 py-3 text-center font-medium">Sudah Diambil</th>
             </tr>
