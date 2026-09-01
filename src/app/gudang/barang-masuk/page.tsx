@@ -56,8 +56,15 @@ export default async function BarangMasukPage({
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-semibold text-slate-800">Barang Masuk</h1>
-      <p className="mb-4 text-sm text-slate-500">Catat kedatangan/restock barang ke gudang</p>
+    <div className="mb-4 flex items-center justify-between">
+      <div>
+        <h1 className="mb-1 text-2xl font-semibold text-slate-800">Barang Masuk</h1>
+        <p className="text-sm text-slate-500">Catat kedatangan/restock barang ke gudang</p>
+      </div>
+      <a href="/gudang/barang-masuk/do" className="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50">
+        Lihat DO Barang Masuk →
+      </a>
+    </div>
 
       <form
         action={catatBarangMasuk}
