@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tambahUser, hapusUser } from "./actions";
 
@@ -13,6 +14,24 @@ type Branch = { id: string; nama: string };
 
 export default async function MasterUserPage() {
   const supabase = await createClient();
+
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
+
+  if (authUser) {
+    const { data: userSekarang } = await supabase
+      .from("users")
+      .select("role")
+      .eq("auth_id", authUser.id)
+      .maybeSingle();
+
+    if (userSekarang?.role !== "super_admin") {
+      redirect("/admin/dashboard");
+    }
+  } else {
+    redirect("/admin/dashboard");
+  }
 
   const { data: usersData, error } = await supabase
     .from("users")
@@ -47,6 +66,7 @@ export default async function MasterUserPage() {
             <option value="cabang">Cabang</option>
             <option value="gudang">Gudang</option>
             <option value="admin">Admin</option>
+            <option value="super_admin">Super Admin</option>
           </select>
         </div>
         <div className="col-span-2">
