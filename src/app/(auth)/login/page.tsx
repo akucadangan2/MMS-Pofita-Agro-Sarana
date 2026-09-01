@@ -46,7 +46,7 @@ export default function LoginPage() {
       return;
     }
 
-    if (userRow.role === "admin") {
+    if (userRow.role === "admin" || userRow.role === "super_admin") {
       router.push("/admin/dashboard");
     } else if (userRow.role === "gudang") {
       router.push("/gudang/dashboard");
