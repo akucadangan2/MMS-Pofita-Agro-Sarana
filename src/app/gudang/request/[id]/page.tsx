@@ -18,6 +18,7 @@ type ItemRow = {
   qty_terambil: number;
   satuan: string;
   status: string;
+  keterangan: string | null;
   items: { kode: string; nama: string } | null;
 };
 
@@ -51,7 +52,7 @@ export default async function DetailRequestPage({ params }: { params: Promise<{ 
 
   const { data: itemsData } = await supabase
     .from("request_items")
-    .select("id, item_id, qty_diminta, qty_terambil, satuan, status, items(kode, nama)")
+    .select("id, item_id, qty_diminta, qty_terambil, satuan, status, keterangan, items(kode, nama)")
     .eq("request_id", id);
 
   const items = (itemsData as unknown as ItemRow[]) ?? [];

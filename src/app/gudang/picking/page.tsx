@@ -11,6 +11,7 @@ type PickingRow = {
   qty_terambil: number;
   satuan: string;
   status: string;
+  keterangan: string | null;
   items: { kode: string; nama: string; kategori: string | null } | null;
   requests: { no_request: string; branches: { nama: string } | null } | null;
 };
@@ -30,7 +31,7 @@ export default async function PickingPage({
   const { data, error } = await supabase
     .from("request_items")
     .select(
-      "id, request_id, item_id, qty_diminta, qty_terambil, satuan, status, items(kode, nama, kategori), requests(no_request, branches(nama))"
+      "id, request_id, item_id, qty_diminta, qty_terambil, satuan, status, keterangan, items(kode, nama, kategori), requests(no_request, branches(nama))"
     )
     .eq("status", "belum")
     .order("request_id");
@@ -114,7 +115,12 @@ export default async function PickingPage({
                       <td className="px-4 py-3">{r.requests?.no_request ?? "-"}</td>
                       <td className="px-4 py-3">{r.requests?.branches?.nama ?? "-"}</td>
                       <td className="px-4 py-3">{r.items?.kode ?? "-"}</td>
-                      <td className="px-4 py-3">{r.items?.nama ?? "-"}</td>
+                      <td className="px-4 py-3">
+                        {r.items?.nama ?? "-"}
+                        {r.keterangan && (
+                          <p className="mt-0.5 text-xs italic text-amber-600">📝 {r.keterangan}</p>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{r.items?.kategori ?? "-"}</td>
                       <td className="px-4 py-3">
                         {r.qty_diminta} {r.satuan}

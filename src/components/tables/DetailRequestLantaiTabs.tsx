@@ -11,6 +11,7 @@ type ItemRow = {
   qty_terambil: number;
   satuan: string;
   status: string;
+  keterangan: string | null;
   items: { kode: string; nama: string } | null;
 };
 
@@ -71,8 +72,13 @@ export function DetailRequestLantaiTabs({
           <tbody>
             {aktif.items.map((item) => (
               <tr key={item.id} className="border-t">
-                <td className="px-4 py-3">{item.items?.kode ?? "-"}</td>
-                <td className="px-4 py-3">{item.items?.nama ?? "(barang tidak ditemukan)"}</td>
+              <td className="px-4 py-3">{item.items?.kode ?? "-"}</td>
+              <td className="px-4 py-3">
+                {item.items?.nama ?? "(barang tidak ditemukan)"}
+                {item.keterangan && (
+                  <p className="mt-0.5 text-xs italic text-amber-600">📝 {item.keterangan}</p>
+                )}
+              </td>
                 <td className="px-4 py-3">{item.qty_diminta} {item.satuan}</td>
                 <td className="px-4 py-3">
                   {item.status !== "terambil" && item.status !== "dibatalkan" && (
