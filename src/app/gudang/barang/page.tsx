@@ -17,10 +17,11 @@ type StockRow = { item_id: string; qty: number };
 export default async function BarangGudangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; halaman?: string; ukuran?: string; berhasil?: string }>;
+  searchParams: Promise<{ q?: string; kategori?: string; halaman?: string; ukuran?: string; berhasil?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q ?? "";
+  const kategoriFilter = params.kategori ?? "";
   const ukuran = params.ukuran ?? "20";
   const halaman = Math.max(1, Number(params.halaman) || 1);
   const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
@@ -34,6 +35,7 @@ export default async function BarangGudangPage({
     .order("kode");
 
   if (q) query = query.or(`kode.ilike.%${q}%,nama.ilike.%${q}%`);
+  if (kategoriFilter) query = query.eq("kategori", kategoriFilter);
   if (pageSize) {
     const dari = (halaman - 1) * pageSize;
     query = query.range(dari, dari + pageSize - 1);
@@ -50,6 +52,14 @@ export default async function BarangGudangPage({
   for (const s of stockRows) {
     stokPerItem.set(s.item_id, (stokPerItem.get(s.item_id) ?? 0) + s.qty);
   }
+
+  const { data: semuaKategoriData } = await supabase
+    .from("items")
+    .select("kategori")
+    .not("kategori", "is", null);
+  const daftarKategori = Array.from(
+    new Set((semuaKategoriData ?? []).map((k) => k.kategori as string))
+  ).sort();
 
   return (
     <div>
@@ -87,8 +97,8 @@ export default async function BarangGudangPage({
         </button>
       </form>
 
-      <div className="mb-4 flex items-center gap-3">
-        <form method="GET" className="flex-1">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <form method="GET" className="flex flex-1 flex-wrap gap-3">
           <input type="hidden" name="ukuran" value={ukuran} />
           <input
             type="text"
@@ -97,6 +107,22 @@ export default async function BarangGudangPage({
             placeholder="Cari kode atau nama barang..."
             className="w-full max-w-sm rounded-lg border px-3 py-2 text-sm shadow-sm focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
           />
+          <select
+            name="kategori"
+            defaultValue={kategoriFilter}
+            onChange={(e) => e.currentTarget.form?.requestSubmit()}
+            className="rounded-lg border px-3 py-2 text-sm shadow-sm"
+          >
+            <option value="">Semua Kategori</option>
+            {daftarKategori.map((k) => (
+              <option key={k} value={k}>
+                {k}
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50">
+            Terapkan
+          </button>
         </form>
         <PageSizeSelector ukuran={ukuran} />
       </div>
@@ -145,7 +171,7 @@ export default async function BarangGudangPage({
             {items.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-slate-400">
-                  {q ? "Tidak ada hasil yang cocok." : "Belum ada barang."}
+                  {q || kategoriFilter ? "Tidak ada hasil yang cocok." : "Belum ada barang."}
                 </td>
               </tr>
             )}

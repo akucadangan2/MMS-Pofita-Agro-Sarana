@@ -93,6 +93,9 @@ export default async function PrintLaporanGudangPage({
         )}
         <p className="text-center text-sm font-bold">{pengaturan.nama_perusahaan}</p>
         <h1 className="text-center text-base font-bold uppercase">Laporan Pengambilan Harian Gudang</h1>
+        <a href="/gudang/laporan/stok" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
+          → Lihat Laporan Stok (filter kategori & merek)
+        </a>
         <p className="mb-3 text-center text-xs text-slate-500">
           {dari} s/d {sampai}
         </p>
