@@ -82,3 +82,36 @@ export async function simpanDoBarangMasuk(formData: FormData) {
   revalidatePath("/gudang/barang-masuk/do");
   redirect("/gudang/barang-masuk/do?berhasil=1");
 }
+
+export async function hapusDoBarangMasuk(formData: FormData) {
+  const doId = formData.get("doId") as string;
+
+  const supabase = await createClient();
+
+  const { data: items } = await supabase
+    .from("barang_masuk_do_items")
+    .select("item_id, location_id, qty")
+    .eq("do_id", doId);
+
+  for (const item of items ?? []) {
+    if (!item.location_id) continue;
+
+    const { data: stockRow } = await supabase
+      .from("stock")
+      .select("id, qty")
+      .eq("item_id", item.item_id)
+      .eq("location_id", item.location_id)
+      .maybeSingle();
+
+    if (stockRow) {
+      await supabase.from("stock").update({ qty: stockRow.qty - item.qty }).eq("id", stockRow.id);
+    }
+  }
+
+  await supabase.from("stock_movements").delete().eq("ref_id", doId).eq("ref_tipe", "barang_masuk_do");
+  await supabase.from("barang_masuk_do").delete().eq("id", doId);
+
+  revalidatePath("/gudang/barang-masuk");
+  revalidatePath("/gudang/barang-masuk/do");
+  redirect("/gudang/barang-masuk/do?berhasil=1");
+}

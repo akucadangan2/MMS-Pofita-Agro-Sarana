@@ -69,7 +69,11 @@ export default async function ListDoBarangMasukPage({
             {daftarDo.map((d) => (
               <tr key={d.id} className="border-t hover:bg-slate-50">
                 <td className="px-4 py-3 text-slate-500">{new Date(d.tanggal).toLocaleDateString("id-ID")}</td>
-                <td className="px-4 py-3 font-medium">{d.no_do ?? "-"}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link href={`/gudang/barang-masuk/do/${d.id}`} className="text-blue-600 hover:underline">
+                    {d.no_do ?? "(tanpa nomor)"}
+                  </Link>
+                </td>
                 <td className="px-4 py-3">{d.ekspedisi ?? "-"}</td>
                 <td className="px-4 py-3">{d.supir ?? "-"}</td>
                 <td className="px-4 py-3">{d.no_plat ?? "-"}</td>
