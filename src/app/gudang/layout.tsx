@@ -23,7 +23,7 @@ export default async function GudangLayout({ children }: { children: React.React
   const [userResult, badgeRequestResult, badgePickingResult] = await Promise.allSettled([
     supabase.auth.getUser(),
     supabase.from("requests").select("*", { count: "exact", head: true }).eq("status", "baru"),
-    supabase.from("request_items").select("*", { count: "exact", head: true }).neq("status", "terambil"),
+    supabase.from("request_items").select("*", { count: "exact", head: true }).eq("status", "belum"),
   ]);
 
   const user = userResult.status === "fulfilled" ? userResult.value.data.user : null;
