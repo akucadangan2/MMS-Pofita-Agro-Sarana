@@ -43,6 +43,9 @@ export default async function StokPage({
   return (
     <div>
       <h1 className="mb-1 text-2xl font-semibold text-slate-800">Stok</h1>
+      <a href="/gudang/stok/penyesuaian" className="mb-4 inline-block text-sm text-blue-600 hover:underline">
+        → Penyesuaian Stok (Opname)
+      </a>
       <p className="mb-4 text-sm text-slate-500">Stok barang di semua lokasi gudang</p>
 
       <div className="mb-4 flex items-center gap-3">
