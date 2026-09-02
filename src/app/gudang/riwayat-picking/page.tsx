@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { hapusRiwayatPicking } from "./actions";
 
 type MovementRow = {
   id: string;
@@ -15,8 +16,27 @@ type RequestInfo = {
   branches: { nama: string } | null;
 };
 
-export default async function RiwayatPickingPage() {
+export default async function RiwayatPickingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ berhasil?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const berhasil = params.berhasil === "1";
+  const pesanError = params.error;
+
   const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let role = "gudang";
+  if (user) {
+    const { data: userRow } = await supabase.from("users").select("role").eq("auth_id", user.id).maybeSingle();
+    if (userRow?.role) role = userRow.role;
+  }
+  const isSuperAdmin = role === "super_admin";
 
   const { data: movementsData, error } = await supabase
     .from("stock_movements")
@@ -62,6 +82,14 @@ export default async function RiwayatPickingPage() {
       <h1 className="mb-1 text-2xl font-semibold text-slate-800">Riwayat Picking</h1>
       <p className="mb-4 text-sm text-slate-500">Rekap pengambilan barang per request</p>
 
+      {berhasil && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          ✓ Riwayat berhasil dihapus.
+        </div>
+      )}
+      {pesanError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pesanError}</div>
+      )}
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
       <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
@@ -73,6 +101,7 @@ export default async function RiwayatPickingPage() {
               <th className="px-4 py-3 font-medium">Tanggal</th>
               <th className="px-4 py-3 font-medium">Total Item</th>
               <th className="px-4 py-3 font-medium">Total Qty Diambil</th>
+              {isSuperAdmin && <th className="px-4 py-3 font-medium">Aksi</th>}
             </tr>
           </thead>
           <tbody>
@@ -89,11 +118,21 @@ export default async function RiwayatPickingPage() {
                 </td>
                 <td className="px-4 py-3">{d.totalItem} item</td>
                 <td className="px-4 py-3 font-medium">{d.totalQty}</td>
+                {isSuperAdmin && (
+                  <td className="px-4 py-3">
+                    <form action={hapusRiwayatPicking}>
+                      <input type="hidden" name="requestId" value={d.requestId} />
+                      <button type="submit" className="text-xs text-red-600 hover:underline">
+                        Hapus
+                      </button>
+                    </form>
+                  </td>
+                )}
               </tr>
             ))}
             {daftar.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-400">
+                <td colSpan={isSuperAdmin ? 6 : 5} className="px-4 py-10 text-center text-slate-400">
                   Belum ada riwayat picking.
                 </td>
               </tr>
