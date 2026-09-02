@@ -110,7 +110,6 @@ export default async function BarangGudangPage({
           <select
             name="kategori"
             defaultValue={kategoriFilter}
-            onChange={(e) => e.currentTarget.form?.requestSubmit()}
             className="rounded-lg border px-3 py-2 text-sm shadow-sm"
           >
             <option value="">Semua Kategori</option>
