@@ -87,8 +87,15 @@ export default async function RequestMasukPage({
 
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-semibold text-slate-800">Request Masuk</h1>
-      <p className="mb-4 text-sm text-slate-500">Daftar permintaan barang dari semua cabang</p>
+      <div className="mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="mb-1 text-2xl font-semibold text-slate-800">Request Masuk</h1>
+          <p className="text-sm text-slate-500">Daftar permintaan barang dari semua cabang</p>
+        </div>
+        <Link href="/gudang/request/tambah" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700">
+          + Buat Request Manual
+        </Link>
+      </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         {DAFTAR_STATUS.map((s, i) => {
@@ -124,7 +131,7 @@ export default async function RequestMasukPage({
 
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
-      <RequestMasukTable requests={requests} />
+      <RequestMasukTable requests={requests} requestKurangStok={requestKurangStok} />
       
 
       {pageSize && (
