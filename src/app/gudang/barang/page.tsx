@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { tambahBarang, hapusBarang } from "./actions";
+import { tambahBarang, hapusBarang, aktifkanKembaliBarang } from "./actions";
 import { Pagination } from "@/components/ui/Pagination";
 import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
+import { KonfirmasiHapusButton } from "@/components/ui/KonfirmasiHapusButton";
 
 type ItemRow = {
   id: string;
@@ -10,6 +11,7 @@ type ItemRow = {
   nama: string;
   kategori: string | null;
   satuan_dasar: string;
+  nonaktif: boolean;
 };
 
 type StockRow = { item_id: string; qty: number };
@@ -17,7 +19,7 @@ type StockRow = { item_id: string; qty: number };
 export default async function BarangGudangPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; kategori?: string; halaman?: string; ukuran?: string; berhasil?: string }>;
+  searchParams: Promise<{ q?: string; kategori?: string; halaman?: string; ukuran?: string; berhasil?: string; nonaktif?: string; error?: string }>;
 }) {
   const params = await searchParams;
   const q = params.q ?? "";
@@ -26,12 +28,14 @@ export default async function BarangGudangPage({
   const halaman = Math.max(1, Number(params.halaman) || 1);
   const pageSize = ukuran === "all" ? null : Number(ukuran) || 20;
   const berhasil = params.berhasil === "1";
+  const jadiNonaktif = params.nonaktif === "1";
+  const pesanError = params.error;
 
   const supabase = await createClient();
 
   let query = supabase
     .from("items")
-    .select("id, kode, nama, kategori, satuan_dasar", { count: "exact" })
+    .select("id, kode, nama, kategori, satuan_dasar, nonaktif", { count: "exact" })
     .order("kode");
 
   if (q) query = query.or(`kode.ilike.%${q}%,nama.ilike.%${q}%`);
@@ -68,6 +72,16 @@ export default async function BarangGudangPage({
       {berhasil && (
         <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
           ✓ Perubahan berhasil disimpan.
+        </div>
+      )}
+      {jadiNonaktif && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+          Barang ini masih punya riwayat transaksi (stok/request lama), jadi dinonaktifkan aja — bukan dihapus permanen. Barang nonaktif gak muncul lagi di pencarian, tapi datanya tetap aman.
+        </div>
+      )}
+      {pesanError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          Gagal menghapus: {pesanError}
         </div>
       )}
 
@@ -142,9 +156,14 @@ export default async function BarangGudangPage({
           </thead>
           <tbody>
             {items.map((item) => (
-              <tr key={item.id} className="border-t hover:bg-slate-50">
+              <tr key={item.id} className={`border-t hover:bg-slate-50 ${item.nonaktif ? "opacity-50" : ""}`}>
                 <td className="px-4 py-3">{item.kode}</td>
-                <td className="px-4 py-3">{item.nama}</td>
+                <td className="px-4 py-3">
+                  {item.nama}
+                  {item.nonaktif && (
+                    <span className="ml-2 rounded-full bg-slate-200 px-2 py-0.5 text-xs text-slate-600">Nonaktif</span>
+                  )}
+                </td>
                 <td className="px-4 py-3">{item.kategori ?? "-"}</td>
                 <td className="px-4 py-3">{item.satuan_dasar}</td>
                 <td className="px-4 py-3">{stokPerItem.get(item.id) ?? 0}</td>
@@ -158,12 +177,20 @@ export default async function BarangGudangPage({
                   <Link href={`/gudang/barang/${item.id}/lokasi`} className="text-xs text-blue-600 hover:underline">
                     Lokasi
                   </Link>
-                  <form action={hapusBarang} className="inline">
-                    <input type="hidden" name="id" value={item.id} />
-                    <button type="submit" className="text-xs text-red-600 hover:underline">
-                      Hapus
-                    </button>
-                  </form>
+                  {item.nonaktif ? (
+                    <form action={aktifkanKembaliBarang} className="inline">
+                      <input type="hidden" name="id" value={item.id} />
+                      <button type="submit" className="text-xs text-green-600 hover:underline">
+                        Aktifkan Lagi
+                      </button>
+                    </form>
+                  ) : (
+                    <KonfirmasiHapusButton
+                      formAction={hapusBarang}
+                      hiddenFields={{ id: item.id }}
+                      namaBarang={item.nama}
+                    />
+                  )}
                 </td>
               </tr>
             ))}

@@ -62,7 +62,31 @@ export async function updateBarang(formData: FormData) {
 export async function hapusBarang(formData: FormData) {
   const id = formData.get("id") as string;
   const supabase = await createClient();
-  await supabase.from("items").delete().eq("id", id);
+
+  const { error } = await supabase.from("items").delete().eq("id", id);
+
+  if (error) {
+    // Kode 23503 = foreign key violation, artinya barang ini masih kepake di tempat lain
+    // (ada di stok, riwayat request, dll) — jadi dinonaktifkan aja, bukan dihapus permanen.
+    if (error.code === "23503") {
+      await supabase.from("items").update({ nonaktif: true }).eq("id", id);
+      revalidatePath("/gudang/barang");
+      revalidatePath("/admin/barang");
+      redirect("/gudang/barang?nonaktif=1");
+    }
+    redirect(`/gudang/barang?error=${encodeURIComponent(error.message)}`);
+  }
+
+  revalidatePath("/gudang/barang");
+  revalidatePath("/admin/barang");
+}
+
+export async function aktifkanKembaliBarang(formData: FormData) {
+  const id = formData.get("id") as string;
+  const supabase = await createClient();
+
+  await supabase.from("items").update({ nonaktif: false }).eq("id", id);
+
   revalidatePath("/gudang/barang");
   revalidatePath("/admin/barang");
 }
