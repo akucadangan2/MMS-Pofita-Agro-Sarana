@@ -1,4 +1,4 @@
-import { LayoutDashboard, Boxes, Package, MapPin, Building2, Users, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Boxes, Package, MapPin, Building2, Users, BarChart3, History } from "lucide-react";
 import { AppShell } from "@/components/ui/AppShell";
 import { TopBar } from "@/components/ui/TopBar";
 import { createClient } from "@/lib/supabase/server";
@@ -25,6 +25,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     { label: "Cabang", href: "/admin/cabang", icon: <Building2 /> },
     ...(role === "super_admin" ? [{ label: "User", href: "/admin/user", icon: <Users /> }] : []),
     { label: "Laporan", href: "/admin/laporan", icon: <BarChart3 /> },
+    { label: "Riwayat Picking", href: "/admin/riwayat-picking", icon: <History /> },
   ];
 
   return (
