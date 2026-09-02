@@ -45,7 +45,7 @@ export default async function PrintPickingPage({
     .select(
       "id, item_id, qty_diminta, satuan, items(kode, nama), requests(no_request, branches(nama))"
     )
-    .neq("status", "terambil");
+    .eq("status", "belum");
 
   const rows = (data as unknown as PickingRow[]) ?? [];
   const itemIds = rows.map((r) => r.item_id);

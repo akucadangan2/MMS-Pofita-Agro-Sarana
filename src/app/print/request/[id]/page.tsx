@@ -67,7 +67,8 @@ export default async function PrintRequestPage({
   const { data: itemsData } = await supabase
     .from("request_items")
     .select("id, item_id, qty_diminta, qty_terambil, satuan, status, items(kode, nama)")
-    .eq("request_id", id);
+    .eq("request_id", id)
+    .neq("status", "dibatalkan");
 
   const allItems = (itemsData as unknown as ItemRow[]) ?? [];
   const itemIds = allItems.map((i) => i.item_id);
