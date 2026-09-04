@@ -7,7 +7,7 @@ type StockRow = {
   id: string;
   qty: number;
   items: { id: string; kode: string; nama: string; satuan_dasar: string } | null;
-  locations: { lantai: string; area: string | null; rak: string | null } | null;
+  locations: { id: string; lantai: string; area: string | null; rak: string | null } | null;
 };
 
 type SatuanTambahanRow = {
@@ -31,7 +31,7 @@ export default async function StokAdminPage({
 
   let query = supabase
     .from("stock")
-    .select("id, qty, items!inner(id, kode, nama, satuan_dasar), locations(lantai, area, rak)", {
+    .select("id, qty, items!inner(id, kode, nama, satuan_dasar), locations(id, lantai, area, rak)", {
       count: "exact",
     })
     .order("qty", { ascending: false });
