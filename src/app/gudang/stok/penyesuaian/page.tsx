@@ -1,4 +1,7 @@
-import { createClient } from "@/lib/supabase/server";
+"use client";
+
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { simpanPenyesuaianStok } from "./actions";
 
 type Barang = { id: string; kode: string; nama: string; satuan_dasar: string };
@@ -15,28 +18,82 @@ type RiwayatRow = {
   locations: { lantai: string } | null;
 };
 
-export default async function PenyesuaianStokPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ berhasil?: string }>;
-}) {
-  const params = await searchParams;
-  const berhasil = params.berhasil === "1";
+export default function PenyesuaianStokPage() {
+  const supabase = createClient();
 
-  const supabase = await createClient();
+  const [daftarBarang, setDaftarBarang] = useState<Barang[]>([]);
+  const [daftarLokasi, setDaftarLokasi] = useState<Lokasi[]>([]);
+  const [riwayat, setRiwayat] = useState<RiwayatRow[]>([]);
 
-  const { data: itemsData } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama");
-  const daftarBarang = (itemsData as Barang[]) ?? [];
+  const [itemId, setItemId] = useState("");
+  const [teksBarang, setTeksBarang] = useState("");
+  const [locationId, setLocationId] = useState("");
+  const [qtyFisik, setQtyFisik] = useState("");
+  const [alasan, setAlasan] = useState("");
 
-  const { data: locationsData } = await supabase.from("locations").select("id, lantai, area, rak").order("lantai");
-  const daftarLokasi = (locationsData as Lokasi[]) ?? [];
+  const [error, setError] = useState<string | null>(null);
+  const [berhasil, setBerhasil] = useState(false);
+  const [menyimpan, setMenyimpan] = useState(false);
 
-  const { data: riwayatData } = await supabase
-    .from("penyesuaian_stok")
-    .select("id, qty_sistem, qty_fisik, selisih, alasan, dibuat_at, items(kode, nama), locations(lantai)")
-    .order("dibuat_at", { ascending: false })
-    .limit(50);
-  const riwayat = (riwayatData as unknown as RiwayatRow[]) ?? [];
+  async function muatSemua() {
+    const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama");
+    setDaftarBarang((items as Barang[]) ?? []);
+
+    const { data: locations } = await supabase.from("locations").select("id, lantai, area, rak").order("lantai");
+    setDaftarLokasi((locations as Lokasi[]) ?? []);
+
+    const { data: riwayatData } = await supabase
+      .from("penyesuaian_stok")
+      .select("id, qty_sistem, qty_fisik, selisih, alasan, dibuat_at, items(kode, nama), locations(lantai)")
+      .order("dibuat_at", { ascending: false })
+      .limit(50);
+    setRiwayat((riwayatData as unknown as RiwayatRow[]) ?? []);
+  }
+
+  useEffect(() => {
+    muatSemua();
+  }, []);
+
+  function pilihBarang(value: string) {
+    setTeksBarang(value);
+    const cocok = daftarBarang.find((b) => `${b.kode} - ${b.nama}` === value);
+    setItemId(cocok ? cocok.id : "");
+  }
+
+  async function simpan() {
+    setError(null);
+    setBerhasil(false);
+
+    if (!itemId) {
+      setError("Barang belum dipilih dari daftar. Ketik lalu pilih salah satu saran yang muncul.");
+      return;
+    }
+    if (!locationId) {
+      setError("Lokasi wajib dipilih.");
+      return;
+    }
+    if (!qtyFisik || Number(qtyFisik) < 0) {
+      setError("Qty hasil hitung fisik wajib diisi.");
+      return;
+    }
+
+    setMenyimpan(true);
+    const hasil = await simpanPenyesuaianStok(itemId, locationId, Number(qtyFisik), alasan);
+    setMenyimpan(false);
+
+    if (!hasil.ok) {
+      setError(hasil.pesan);
+      return;
+    }
+
+    setBerhasil(true);
+    setItemId("");
+    setTeksBarang("");
+    setLocationId("");
+    setQtyFisik("");
+    setAlasan("");
+    muatSemua();
+  }
 
   return (
     <div>
@@ -48,6 +105,9 @@ export default async function PenyesuaianStokPage({
           ✓ Penyesuaian stok berhasil disimpan.
         </div>
       )}
+      {error && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+      )}
 
       <datalist id="daftar-barang-opname">
         {daftarBarang.map((b) => (
@@ -55,15 +115,23 @@ export default async function PenyesuaianStokPage({
         ))}
       </datalist>
 
-      <form action={simpanPenyesuaianStok} className="mb-8 max-w-lg space-y-3 rounded-xl border bg-white p-4 shadow-sm">
+      <div className="mb-8 max-w-lg space-y-3 rounded-xl border bg-white p-4 shadow-sm">
         <div>
           <label className="mb-1 block text-xs text-slate-500">Barang</label>
-          <input list="daftar-barang-opname" placeholder="Ketik kode atau nama barang..." className="w-full rounded-lg border px-3 py-2 text-sm" id="input-cari-barang" />
-          <input type="hidden" name="itemId" id="input-item-id" />
+          <input
+            list="daftar-barang-opname"
+            value={teksBarang}
+            onChange={(e) => pilihBarang(e.target.value)}
+            placeholder="Ketik kode atau nama barang..."
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
+          {teksBarang && !itemId && (
+            <p className="mt-1 text-xs text-amber-600">Belum cocok dengan barang manapun, pilih dari saran yang muncul.</p>
+          )}
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500">Lokasi</label>
-          <select name="locationId" required className="w-full rounded-lg border px-3 py-2 text-sm">
+          <select value={locationId} onChange={(e) => setLocationId(e.target.value)} className="w-full rounded-lg border px-3 py-2 text-sm">
             <option value="">Pilih lokasi...</option>
             {daftarLokasi.map((l) => (
               <option key={l.id} value={l.id}>
@@ -76,28 +144,32 @@ export default async function PenyesuaianStokPage({
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500">Qty Hasil Hitung Fisik</label>
-          <input type="number" name="qtyFisik" min={0} required className="w-full rounded-lg border px-3 py-2 text-sm" />
+          <input
+            type="number"
+            min={0}
+            value={qtyFisik}
+            onChange={(e) => setQtyFisik(e.target.value)}
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs text-slate-500">Alasan / Catatan (opsional)</label>
-          <input type="text" name="alasan" placeholder="Contoh: Ada barang rusak, hasil hitung ulang gudang" className="w-full rounded-lg border px-3 py-2 text-sm" />
+          <input
+            type="text"
+            value={alasan}
+            onChange={(e) => setAlasan(e.target.value)}
+            placeholder="Contoh: Ada barang rusak, hasil hitung ulang gudang"
+            className="w-full rounded-lg border px-3 py-2 text-sm"
+          />
         </div>
-        <button type="submit" className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          Simpan Penyesuaian
+        <button
+          onClick={simpan}
+          disabled={menyimpan}
+          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {menyimpan ? "Menyimpan..." : "Simpan Penyesuaian"}
         </button>
-      </form>
-
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            document.getElementById('input-cari-barang').addEventListener('change', function(e) {
-              var opsi = ${JSON.stringify(daftarBarang)};
-              var cocok = opsi.find(function(b) { return (b.kode + ' - ' + b.nama) === e.target.value; });
-              document.getElementById('input-item-id').value = cocok ? cocok.id : '';
-            });
-          `,
-        }}
-      />
+      </div>
 
       <h2 className="mb-2 text-sm font-medium text-slate-700">Riwayat Penyesuaian (50 Terakhir)</h2>
       <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">

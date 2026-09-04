@@ -2,13 +2,15 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
-export async function simpanPenyesuaianStok(formData: FormData) {
-  const itemId = formData.get("itemId") as string;
-  const locationId = formData.get("locationId") as string;
-  const qtyFisik = Number(formData.get("qtyFisik"));
-  const alasan = formData.get("alasan") as string;
+export async function simpanPenyesuaianStok(
+  itemId: string,
+  locationId: string,
+  qtyFisik: number,
+  alasan: string
+): Promise<{ ok: true } | { ok: false; pesan: string }> {
+  if (!itemId) return { ok: false, pesan: "Barang wajib dipilih dari daftar." };
+  if (!locationId) return { ok: false, pesan: "Lokasi wajib dipilih." };
 
   const supabase = await createClient();
 
@@ -50,5 +52,6 @@ export async function simpanPenyesuaianStok(formData: FormData) {
 
   revalidatePath("/gudang/stok");
   revalidatePath("/gudang/stok/penyesuaian");
-  redirect("/gudang/stok/penyesuaian?berhasil=1");
+
+  return { ok: true };
 }
