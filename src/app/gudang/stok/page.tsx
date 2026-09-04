@@ -6,8 +6,14 @@ import { PageSizeSelector } from "@/components/ui/PageSizeSelector";
 type StockRow = {
   id: string;
   qty: number;
-  items: { kode: string; nama: string; satuan_dasar: string } | null;
+  items: { id: string; kode: string; nama: string; satuan_dasar: string } | null;
   locations: { lantai: string; area: string | null; rak: string | null } | null;
+};
+
+type SatuanTambahanRow = {
+  item_id: string;
+  nama_satuan: string;
+  faktor_konversi: number;
 };
 
 export default async function StokPage({
@@ -25,7 +31,7 @@ export default async function StokPage({
 
   let query = supabase
     .from("stock")
-    .select("id, qty, items!inner(kode, nama, satuan_dasar), locations(lantai, area, rak)", {
+    .select("id, qty, items!inner(id, kode, nama, satuan_dasar), locations(lantai, area, rak)", {
       count: "exact",
     })
     .order("qty", { ascending: false });
@@ -39,6 +45,23 @@ export default async function StokPage({
   const { data, count, error } = await query;
   const stock = (data as unknown as StockRow[]) ?? [];
   const totalHalaman = pageSize ? Math.max(1, Math.ceil((count ?? 0) / pageSize)) : 1;
+
+  const itemIds = Array.from(new Set(stock.map((s) => s.items?.id).filter((id): id is string => !!id)));
+  let satuanTambahan: SatuanTambahanRow[] = [];
+  if (itemIds.length > 0) {
+    const { data: satuanData } = await supabase
+      .from("item_units")
+      .select("item_id, nama_satuan, faktor_konversi")
+      .in("item_id", itemIds);
+    satuanTambahan = (satuanData as SatuanTambahanRow[]) ?? [];
+  }
+
+  const satuanPerItem = new Map<string, SatuanTambahanRow[]>();
+  for (const s of satuanTambahan) {
+    const arr = satuanPerItem.get(s.item_id) ?? [];
+    arr.push(s);
+    satuanPerItem.set(s.item_id, arr);
+  }
 
   return (
     <div>
@@ -64,7 +87,7 @@ export default async function StokPage({
 
       {error && <p className="mb-3 text-sm text-red-600">Error: {error.message}</p>}
 
-      <StokTable stock={stock} />
+      <StokTable stock={stock} satuanPerItem={satuanPerItem} />
 
       {pageSize && (
         <Pagination halamanSekarang={halaman} totalHalaman={totalHalaman} q={q} ukuran={ukuran} basePath="/gudang/stok" />
