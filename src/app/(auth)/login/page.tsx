@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { InstallPWAButton } from "@/components/ui/InstallPWAButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -334,9 +335,12 @@ export default function LoginPage() {
           </form>
 
           {/* Footer */}
-          <p className="mt-6 text-center text-xs text-slate-400">
-            © {new Date().getFullYear()} CV Profita Agro Sarana
-          </p>
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <InstallPWAButton />
+            <p className="text-center text-xs text-slate-400">
+              © {new Date().getFullYear()} CV Profita Agro Sarana
+            </p>
+          </div>
         </div>
       </div>
 
