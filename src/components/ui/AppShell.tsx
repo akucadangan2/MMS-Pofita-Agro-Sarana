@@ -64,6 +64,7 @@ export function AppShell({
         <Link
           key={item.href}
           href={item.href}
+          prefetch={false}
           onClick={() => tutupSetelahKlik && setDrawerTerbuka(false)}
           className={`flex items-center gap-3 rounded-xl px-4 py-3.5 text-base transition-all ${
             aktif ? "bg-[#007AFF] font-medium text-white shadow-sm" : "text-slate-700 hover:bg-black/5"
@@ -133,6 +134,7 @@ export function AppShell({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={false}
                   className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-sm transition-all ${
                     aktif ? "bg-[#007AFF] font-medium text-white" : "text-slate-600 hover:bg-black/5"
                   }`}

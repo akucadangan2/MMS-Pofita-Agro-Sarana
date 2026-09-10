@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function tambahUser(formData: FormData) {
   const nama = formData.get("nama") as string;
@@ -20,7 +21,10 @@ export async function tambahUser(formData: FormData) {
   });
 
   if (authError || !authUser.user) {
-    throw new Error(authError?.message ?? "Gagal membuat akun login");
+    const pesan = authError?.message?.includes("already been registered")
+      ? `Email "${email}" sudah terdaftar, pakai email lain.`
+      : authError?.message ?? "Gagal membuat akun login";
+    redirect(`/admin/user?error=${encodeURIComponent(pesan)}`);
   }
 
   const supabase = await createClient();
@@ -33,10 +37,11 @@ export async function tambahUser(formData: FormData) {
 
   if (insertError) {
     await admin.auth.admin.deleteUser(authUser.user.id);
-    throw new Error(insertError.message);
+    redirect(`/admin/user?error=${encodeURIComponent(insertError.message)}`);
   }
 
   revalidatePath("/admin/user");
+  redirect("/admin/user?berhasil=1");
 }
 
 export async function hapusUser(formData: FormData) {

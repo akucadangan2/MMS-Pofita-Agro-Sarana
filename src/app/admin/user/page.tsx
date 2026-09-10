@@ -12,7 +12,15 @@ type UserRow = {
 
 type Branch = { id: string; nama: string };
 
-export default async function MasterUserPage() {
+export default async function MasterUserPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ berhasil?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const berhasil = params.berhasil === "1";
+  const pesanError = params.error;
+
   const supabase = await createClient();
 
   const {
@@ -46,6 +54,15 @@ export default async function MasterUserPage() {
   return (
     <div>
       <h1 className="mb-4 text-2xl font-semibold text-slate-800">Master User</h1>
+
+      {berhasil && (
+        <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+          ✓ User berhasil ditambahkan.
+        </div>
+      )}
+      {pesanError && (
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{pesanError}</div>
+      )}
 
       <form action={tambahUser} className="mb-6 grid max-w-2xl grid-cols-2 gap-3 rounded-lg border bg-white p-4">
         <div>
