@@ -113,7 +113,7 @@ export function AppShell({
         </div>
       )}
 
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <div className="flex items-center gap-3 border-b border-black/5 bg-white/70 px-4 py-3 backdrop-blur-xl lg:hidden">
           <button onClick={() => setDrawerTerbuka(true)} className="rounded-lg p-1.5 text-slate-600 hover:bg-black/5" aria-label="Buka menu">
             <Menu size={22} />
