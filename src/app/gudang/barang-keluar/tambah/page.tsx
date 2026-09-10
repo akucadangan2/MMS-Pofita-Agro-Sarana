@@ -101,41 +101,54 @@ export default function TambahBarangKeluarPage() {
       return;
     }
 
+    // Simpan semua baris delivery_items sekaligus (1 kali kirim, bukan satu-satu)
+    const deliveryItemsPayload = barisValid.map((b) => ({
+      delivery_id: delivery.id,
+      item_id: b.itemId,
+      qty: Number(b.qty),
+      satuan: b.satuan,
+    }));
+    await supabase.from("delivery_items").insert(deliveryItemsPayload);
+
+    // Gabungin dulu baris yang barangnya sama (kalau ada), biar gak baca stok lama
+    // dua kali pas motong barang yang sama di 2 baris berbeda
+    const totalPerItem = new Map<string, number>();
     for (const b of barisValid) {
       const infoSatuan = satuanTambahan.find((s) => s.item_id === b.itemId && s.nama_satuan === b.satuan);
       const faktor = infoSatuan?.faktor_konversi ?? 1;
       const qtyDalamSatuanDasar = Number(b.qty) * faktor;
-
-      await supabase.from("delivery_items").insert({
-        delivery_id: delivery.id,
-        item_id: b.itemId,
-        qty: Number(b.qty),
-        satuan: b.satuan,
-      });
-
-      const { data: stockRows } = await supabase
-        .from("stock")
-        .select("id, qty")
-        .eq("item_id", b.itemId)
-        .order("qty", { ascending: false });
-
-      let sisa = qtyDalamSatuanDasar;
-      for (const row of stockRows ?? []) {
-        if (sisa <= 0) break;
-        const potong = Math.min(sisa, row.qty);
-        await supabase.from("stock").update({ qty: row.qty - potong }).eq("id", row.id);
-        sisa -= potong;
-      }
-
-      await supabase.from("stock_movements").insert({
-        item_id: b.itemId,
-        tipe: "keluar",
-        qty: Number(b.qty),
-        satuan: b.satuan,
-        ref_id: delivery.id,
-        ref_tipe: "barang_keluar_customer",
-      });
+      totalPerItem.set(b.itemId, (totalPerItem.get(b.itemId) ?? 0) + qtyDalamSatuanDasar);
     }
+
+    // Potong stok tiap BARANG BEDA secara bersamaan (aman, karena gak saling gantung)
+    await Promise.all(
+      Array.from(totalPerItem.entries()).map(async ([itemId, qtyDalamSatuanDasar]) => {
+        const { data: stockRows } = await supabase
+          .from("stock")
+          .select("id, qty")
+          .eq("item_id", itemId)
+          .order("qty", { ascending: false });
+
+        let sisa = qtyDalamSatuanDasar;
+        for (const row of stockRows ?? []) {
+          if (sisa <= 0) break;
+          const potong = Math.min(sisa, row.qty);
+          await supabase.from("stock").update({ qty: row.qty - potong }).eq("id", row.id);
+          sisa -= potong;
+        }
+      })
+    );
+
+    // Catat riwayat pergerakan stok sekaligus (1 kali kirim)
+    const movementsPayload = barisValid.map((b) => ({
+      item_id: b.itemId,
+      tipe: "keluar",
+      qty: Number(b.qty),
+      satuan: b.satuan,
+      ref_id: delivery.id,
+      ref_tipe: "barang_keluar_customer",
+    }));
+    await supabase.from("stock_movements").insert(movementsPayload);
 
     setMenyimpan(false);
     router.push("/gudang/barang-keluar");
