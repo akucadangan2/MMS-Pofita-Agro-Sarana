@@ -32,12 +32,12 @@ async function perbaruiStatusRequest(requestId: string) {
     .select("status")
     .eq("request_id", requestId);
 
-  const semuaTerambil = sisaItems?.every((i) => i.status === "terambil") ?? false;
+  const semuaBeres = sisaItems?.every((i) => i.status === "terambil" || i.status === "dibatalkan") ?? false;
   const adaYangTerambil = sisaItems?.some((i) => i.status === "terambil") ?? false;
-  const statusBaru = semuaTerambil ? "selesai" : adaYangTerambil ? "sedang_diambil" : "baru";
+  const statusBaru = semuaBeres ? "selesai" : adaYangTerambil ? "sedang_diambil" : "baru";
 
   await supabase.from("requests").update({ status: statusBaru }).eq("id", requestId);
-  return { semuaTerambil, statusBaru };
+  return { semuaTerambil: semuaBeres, statusBaru };
 }
 
 // Kurangi stok — ambil dari lokasi dengan qty terbanyak dulu (greedy), bisa kepotong dari >1 lokasi
