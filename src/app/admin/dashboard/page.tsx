@@ -359,9 +359,7 @@ function KartuRingkasan({
 
       <div className="mt-5">
 
-        <p className="text-2xl font-bold tracking-tight text-slate-900">
-          {nilai.toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}
-        </p>
+        <p className="text-2xl font-bold tracking-tight text-slate-900">{nilai.toLocaleString("id-ID")}</p>
 
         <p className="mt-1 text-xs font-medium text-slate-500">
           {label}
