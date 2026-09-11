@@ -67,7 +67,7 @@ export default async function PrintPickingPage({
     ? rows.filter((r) => (lantaiPerItem.get(r.item_id) ?? "Tanpa Lokasi") === lantai)
     : rows;
 
-  const sekarang = new Date().toLocaleString("id-ID");
+  const sekarang = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
   const lebarKertas = pengaturan.ukuran_kertas;
   const ukuranFontCss = ukuranFontKeCss(pengaturan.ukuran_font);
 

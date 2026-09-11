@@ -222,7 +222,7 @@ export default function PenyesuaianStokPage() {
               <div>
                 <p className="text-sm font-medium text-slate-800">{batch.keterangan ?? "(tanpa keterangan)"}</p>
                 <p className="text-xs text-slate-500">
-                  {new Date(batch.dibuat_at).toLocaleString("id-ID")} • {batch.penyesuaian_stok.length} barang
+                  {new Date(batch.dibuat_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} • {batch.penyesuaian_stok.length} barang
                 </p>
               </div>
               <button onClick={() => hapus(batch.id)} className="text-xs text-red-600 hover:underline">

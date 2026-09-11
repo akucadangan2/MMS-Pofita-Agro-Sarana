@@ -114,7 +114,7 @@ export default async function RiwayatPickingPage({
                 </td>
                 <td className="px-4 py-3">{d.info?.branches?.nama ?? "-"}</td>
                 <td className="px-4 py-3 text-slate-500">
-                  {d.info ? new Date(d.info.dibuat_at).toLocaleString("id-ID") : "-"}
+                  {d.info ? new Date(d.info.dibuat_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" }) : "-"}
                 </td>
                 <td className="px-4 py-3">{d.totalItem} item</td>
                 <td className="px-4 py-3 font-medium">{d.totalQty}</td>

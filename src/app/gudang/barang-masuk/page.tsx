@@ -136,7 +136,7 @@ export default async function BarangMasukPage({
         <tbody>
           {movements.map((m) => (
             <tr key={m.id} className="border-t hover:bg-slate-50">
-              <td className="px-4 py-3 text-slate-500">{new Date(m.created_at).toLocaleString("id-ID")}</td>
+              <td className="px-4 py-3 text-slate-500">{new Date(m.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}</td>
               <td className="px-4 py-3">{m.items?.kode ?? "-"}</td>
               <td className="px-4 py-3">{m.items?.nama ?? "-"}</td>
               <td className="px-4 py-3 font-medium text-green-700">

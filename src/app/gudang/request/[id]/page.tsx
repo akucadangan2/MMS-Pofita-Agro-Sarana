@@ -117,7 +117,7 @@ export default async function DetailRequestPage({ params }: { params: Promise<{ 
     <div>
       <h1 className="mb-1 text-2xl font-semibold text-slate-800">{requestDetail.no_request}</h1>
       <p className="mb-4 text-sm text-slate-500">
-        {requestDetail.branches?.nama ?? "-"} • {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
+        {requestDetail.branches?.nama ?? "-"} • {new Date(requestDetail.dibuat_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}
       </p>
 
       <div className="mb-6 grid grid-cols-3 gap-4">

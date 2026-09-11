@@ -48,7 +48,7 @@ export function RequestMasukTable({
                   )}
                 </td>
                 <td className="px-4 py-3">{r.branches?.nama ?? "-"}</td>
-                <td className="px-4 py-3 text-slate-500">{new Date(r.dibuat_at).toLocaleString("id-ID")}</td>
+                <td className="px-4 py-3 text-slate-500">{new Date(r.dibuat_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}</td>
                 <td className="px-4 py-3">{totalBarang}</td>
                 <td className="px-4 py-3">{totalQty}</td>
                 <td className="px-4 py-3">

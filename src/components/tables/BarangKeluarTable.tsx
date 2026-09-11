@@ -28,7 +28,7 @@ export function BarangKeluarTable({ deliveries }: { deliveries: DeliveryRow[] })
         <tbody>
           {deliveries.map((d) => (
             <tr key={d.id} className="border-t hover:bg-slate-50">
-              <td className="px-4 py-3 text-slate-500">{new Date(d.tanggal).toLocaleDateString("id-ID")}</td>
+              <td className="px-4 py-3 text-slate-500">{new Date(d.tanggal).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}</td>
               <td className="px-4 py-3 font-medium">{d.nama_pelanggan}</td>
               <td className="px-4 py-3">{d.no_do ?? "-"}</td>
               <td className="px-4 py-3">{d.supir ?? "-"}</td>

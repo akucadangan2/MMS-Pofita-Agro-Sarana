@@ -82,7 +82,7 @@ export default async function PrintLaporanGudangPage({
   const rekap = Array.from(rekapMap.values()).sort((a, b) => b.qty - a.qty);
   const totalJenisBarang = rekap.length;
 
-  const sekarang = new Date().toLocaleString("id-ID");
+  const sekarang = new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
   const lebarKertas = pengaturan.ukuran_kertas;
   const ukuranFontCss = ukuranFontKeCss(pengaturan.ukuran_font);
 

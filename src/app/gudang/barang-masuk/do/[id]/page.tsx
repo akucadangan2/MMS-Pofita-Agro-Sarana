@@ -53,7 +53,7 @@ export default async function DetailDoBarangMasukPage({ params }: { params: Prom
           <h1 className="mb-1 text-2xl font-semibold text-slate-800">
             DO {doDetail.no_do ?? "(tanpa nomor)"}
           </h1>
-          <p className="text-sm text-slate-500">{new Date(doDetail.tanggal).toLocaleDateString("id-ID")}</p>
+          <p className="text-sm text-slate-500">{new Date(doDetail.tanggal).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}</p>
         </div>
         <form action={hapusDoBarangMasuk}>
           <input type="hidden" name="doId" value={doDetail.id} />

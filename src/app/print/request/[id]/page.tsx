@@ -109,7 +109,7 @@ export default async function PrintRequestPage({
         <h1 className="text-center font-bold uppercase">List Pengambilan Barang</h1>
         {lantai && <p className="text-center font-semibold">{lantai}</p>}
         <p className="mb-2 text-center text-slate-500">
-          Dicetak: {new Date(requestDetail.dibuat_at).toLocaleString("id-ID")}
+          Dicetak: {new Date(requestDetail.dibuat_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}
         </p>
 
         <div className="border-t border-black">
