@@ -10,6 +10,7 @@ type RequestRow = {
   no_request: string;
   status: string;
   dibuat_at: string;
+  sesi: string | null;
   branches: { nama: string } | null;
   request_items: { item_id: string; qty_diminta: number }[];
 };
@@ -49,7 +50,7 @@ export default async function RequestMasukPage({
 
   let query = supabase
     .from("requests")
-    .select("id, no_request, status, dibuat_at, branches(nama), request_items(item_id, qty_diminta)", {
+    .select("id, no_request, status, dibuat_at, sesi, branches(nama), request_items(item_id, qty_diminta)", {
       count: "exact",
     })
     .order("dibuat_at", { ascending: false });
