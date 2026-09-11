@@ -95,6 +95,10 @@ export default async function LaporanGudangPage({
         → Lihat Laporan Stok (filter kategori & merek)
       </a>
 
+      <a href="/print/laporan-sesi" target="_blank" className="mb-4 ml-4 inline-block text-sm text-blue-600 hover:underline">
+        🖨 Print Laporan Sesi 1 & 2 (Hari Ini)
+      </a>
+
       <form method="GET" className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
         <input type="hidden" name="q" value={q} />
         <input type="hidden" name="ukuran" value={ukuran} />
