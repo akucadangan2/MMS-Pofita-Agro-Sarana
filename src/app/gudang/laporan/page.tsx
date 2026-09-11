@@ -95,9 +95,18 @@ export default async function LaporanGudangPage({
         → Lihat Laporan Stok (filter kategori & merek)
       </a>
 
-      <a href="/print/laporan-sesi" target="_blank" className="mb-4 ml-4 inline-block text-sm text-blue-600 hover:underline">
-        🖨 Print Laporan Sesi 1 & 2 (Hari Ini)
-      </a>
+      <span className="mb-4 ml-4 inline-flex items-center gap-3 text-sm">
+        <span className="text-slate-500">🖨 Print Laporan:</span>
+        <a href="/print/laporan-sesi?sesi=1" target="_blank" className="text-blue-600 hover:underline">
+          Sesi 1
+        </a>
+        <a href="/print/laporan-sesi?sesi=2" target="_blank" className="text-blue-600 hover:underline">
+          Sesi 2
+        </a>
+        <a href="/print/laporan-sesi" target="_blank" className="text-blue-600 hover:underline">
+          Keduanya
+        </a>
+      </span>
 
       <form method="GET" className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4">
         <input type="hidden" name="q" value={q} />

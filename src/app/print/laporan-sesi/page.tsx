@@ -20,10 +20,11 @@ function hariIni() {
 export default async function PrintLaporanSesiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tanggal?: string }>;
+  searchParams: Promise<{ tanggal?: string; sesi?: string }>;
 }) {
   const params = await searchParams;
   const tanggal = params.tanggal || hariIni();
+  const filterSesi = params.sesi; // "1", "2", atau kosong (= keduanya)
 
   const supabase = await createClient();
 
@@ -84,10 +85,9 @@ export default async function PrintLaporanSesiPage({
         <p className="text-sm text-slate-600">Tanggal: {tanggalTampil}</p>
       </div>
 
-      <SeksiTabel judul="Sesi 1 (sebelum jam 11.00)" rekap={rekapSesi1} />
-      <div className="mt-8">
-        <SeksiTabel judul="Sesi 2 (jam 11.00 ke atas)" rekap={rekapSesi2} />
-      </div>
+      {filterSesi !== "2" && <SeksiTabel judul="Sesi 1 (sebelum jam 11.00)" rekap={rekapSesi1} />}
+      {filterSesi !== "1" && filterSesi !== "2" && <div className="mt-8" />}
+      {filterSesi !== "1" && <SeksiTabel judul="Sesi 2 (jam 11.00 ke atas)" rekap={rekapSesi2} />}
 
       <div className="mt-10 grid grid-cols-2 gap-8 text-sm">
         <div>
