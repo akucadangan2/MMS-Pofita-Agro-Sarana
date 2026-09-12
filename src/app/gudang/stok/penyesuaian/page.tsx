@@ -47,7 +47,7 @@ export default function PenyesuaianStokPage() {
   const [menyimpan, setMenyimpan] = useState(false);
 
   async function muatSemua() {
-    const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama");
+    const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama").range(0, 9999);
     setDaftarBarang((items as Barang[]) ?? []);
 
     const { data: locations } = await supabase.from("locations").select("id, lantai, area, rak").order("lantai");
