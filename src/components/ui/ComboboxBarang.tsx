@@ -13,6 +13,7 @@ export function ComboboxBarang({
   value: string;
   onPilih: (barang: Barang | null, teks: string) => void;
 }) {
+  console.log("Total barang ke-load:", daftarBarang.length);
   const [terbuka, setTerbuka] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
