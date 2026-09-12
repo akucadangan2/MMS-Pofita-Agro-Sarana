@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { ComboboxBarang } from "@/components/ui/ComboboxBarang";
 
 type Barang = { id: string; kode: string; nama: string; satuan_dasar: string };
 type SatuanTambahan = { item_id: string; nama_satuan: string; faktor_konversi: number };
 
 type BarisItem = {
   itemId: string;
+  teksBarang: string;
   qty: string;
   satuan: string;
 };
@@ -26,16 +28,16 @@ export default function TambahBarangKeluarPage() {
   const [supir, setSupir] = useState("");
   const [platMobil, setPlatMobil] = useState("");
 
-  const [baris, setBaris] = useState<BarisItem[]>([{ itemId: "", qty: "", satuan: "" }]);
+  const [baris, setBaris] = useState<BarisItem[]>([{ itemId: "", teksBarang: "", qty: "", satuan: "" }]);
   const [menyimpan, setMenyimpan] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function muat() {
-      const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").order("nama");
+      const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama").range(0, 9999);
       setDaftarBarang((items as Barang[]) ?? []);
 
-      const { data: satuan } = await supabase.from("item_units").select("item_id, nama_satuan, faktor_konversi");
+      const { data: satuan } = await supabase.from("item_units").select("item_id, nama_satuan, faktor_konversi").range(0, 9999);
       setSatuanTambahan((satuan as SatuanTambahan[]) ?? []);
     }
     muat();
@@ -48,20 +50,30 @@ export default function TambahBarangKeluarPage() {
     return [barang.satuan_dasar, ...tambahan];
   }
 
-  function ubahBaris(index: number, field: keyof BarisItem, value: string) {
+  function ubahBaris(index: number, field: "qty" | "satuan", value: string) {
     setBaris((prev) => {
       const baru = [...prev];
       baru[index] = { ...baru[index], [field]: value };
-      if (field === "itemId") {
-        const opsi = opsiSatuan(value);
-        baru[index].satuan = opsi[0] ?? "";
-      }
+      return baru;
+    });
+  }
+
+  function pilihBarang(index: number, barangTerpilih: Barang | null, teks: string) {
+    setBaris((prev) => {
+      const baru = [...prev];
+      const opsi = barangTerpilih ? opsiSatuan(barangTerpilih.id) : [];
+      baru[index] = {
+        ...baru[index],
+        teksBarang: teks,
+        itemId: barangTerpilih ? barangTerpilih.id : "",
+        satuan: opsi[0] ?? "",
+      };
       return baru;
     });
   }
 
   function tambahBaris() {
-    setBaris((prev) => [...prev, { itemId: "", qty: "", satuan: "" }]);
+    setBaris((prev) => [...prev, { itemId: "", teksBarang: "", qty: "", satuan: "" }]);
   }
 
   function hapusBaris(index: number) {
@@ -101,7 +113,6 @@ export default function TambahBarangKeluarPage() {
       return;
     }
 
-    // Simpan semua baris delivery_items sekaligus (1 kali kirim, bukan satu-satu)
     const deliveryItemsPayload = barisValid.map((b) => ({
       delivery_id: delivery.id,
       item_id: b.itemId,
@@ -110,8 +121,6 @@ export default function TambahBarangKeluarPage() {
     }));
     await supabase.from("delivery_items").insert(deliveryItemsPayload);
 
-    // Gabungin dulu baris yang barangnya sama (kalau ada), biar gak baca stok lama
-    // dua kali pas motong barang yang sama di 2 baris berbeda
     const totalPerItem = new Map<string, number>();
     for (const b of barisValid) {
       const infoSatuan = satuanTambahan.find((s) => s.item_id === b.itemId && s.nama_satuan === b.satuan);
@@ -120,7 +129,6 @@ export default function TambahBarangKeluarPage() {
       totalPerItem.set(b.itemId, (totalPerItem.get(b.itemId) ?? 0) + qtyDalamSatuanDasar);
     }
 
-    // Potong stok tiap BARANG BEDA secara bersamaan (aman, karena gak saling gantung)
     await Promise.all(
       Array.from(totalPerItem.entries()).map(async ([itemId, qtyDalamSatuanDasar]) => {
         const { data: stockRows } = await supabase
@@ -139,7 +147,6 @@ export default function TambahBarangKeluarPage() {
       })
     );
 
-    // Catat riwayat pergerakan stok sekaligus (1 kali kirim)
     const movementsPayload = barisValid.map((b) => ({
       item_id: b.itemId,
       tipe: "keluar",
@@ -184,24 +191,14 @@ export default function TambahBarangKeluarPage() {
       <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
         <h2 className="mb-3 text-sm font-medium text-slate-700">Daftar Barang</h2>
 
-        <datalist id="daftar-barang">
-          {daftarBarang.map((b) => (
-            <option key={b.id} value={`${b.kode} - ${b.nama}`} />
-          ))}
-        </datalist>
-
         {baris.map((b, i) => (
           <div key={i} className="mb-3 flex flex-wrap items-end gap-3">
             <div className="min-w-[220px] flex-1">
               <label className="mb-1 block text-xs text-slate-500">Barang</label>
-              <input
-                list="daftar-barang"
-                placeholder="Ketik kode atau nama barang..."
-                onChange={(e) => {
-                  const cocok = daftarBarang.find((x) => `${x.kode} - ${x.nama}` === e.target.value);
-                  if (cocok) ubahBaris(i, "itemId", cocok.id);
-                }}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
+              <ComboboxBarang
+                daftarBarang={daftarBarang}
+                value={b.teksBarang}
+                onPilih={(barangTerpilih, teks) => pilihBarang(i, barangTerpilih, teks)}
               />
             </div>
             <div className="w-28">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { simpanPenyesuaianBatch, hapusPenyesuaianBatch } from "./actions";
+import { ComboboxBarang } from "@/components/ui/ComboboxBarang";
 
 type Barang = { id: string; kode: string; nama: string; satuan_dasar: string };
 type Lokasi = { id: string; lantai: string; area: string | null; rak: string | null };
@@ -68,12 +69,19 @@ export default function PenyesuaianStokPage() {
   function ubahBaris(index: number, field: keyof BarisForm, value: string) {
     setBaris((prev) => {
       const baru = [...prev];
-      if (field === "teksBarang") {
-        const cocok = daftarBarang.find((b) => `${b.kode} - ${b.nama}` === value);
-        baru[index] = { ...baru[index], teksBarang: value, itemId: cocok ? cocok.id : "" };
-      } else {
-        baru[index] = { ...baru[index], [field]: value };
-      }
+      baru[index] = { ...baru[index], [field]: value };
+      return baru;
+    });
+  }
+
+  function pilihBarang(index: number, barangTerpilih: Barang | null, teks: string) {
+    setBaris((prev) => {
+      const baru = [...prev];
+      baru[index] = {
+        ...baru[index],
+        teksBarang: teks,
+        itemId: barangTerpilih ? barangTerpilih.id : "",
+      };
       return baru;
     });
   }
@@ -135,12 +143,6 @@ export default function PenyesuaianStokPage() {
         <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
       )}
 
-      <datalist id="daftar-barang-opname">
-        {daftarBarang.map((b) => (
-          <option key={b.id} value={`${b.kode} - ${b.nama}`} />
-        ))}
-      </datalist>
-
       <div className="mb-8 rounded-xl border bg-white p-4 shadow-sm">
         <div className="mb-4 max-w-md">
           <label className="mb-1 block text-xs text-slate-500">Keterangan Penyesuaian (opsional)</label>
@@ -158,12 +160,10 @@ export default function PenyesuaianStokPage() {
           <div key={i} className="mb-3 flex flex-wrap items-end gap-3">
             <div className="min-w-[200px] flex-1">
               <label className="mb-1 block text-xs text-slate-500">Barang</label>
-              <input
-                list="daftar-barang-opname"
+              <ComboboxBarang
+                daftarBarang={daftarBarang}
                 value={b.teksBarang}
-                onChange={(e) => ubahBaris(i, "teksBarang", e.target.value)}
-                placeholder="Ketik kode atau nama barang..."
-                className="w-full rounded-lg border px-3 py-2 text-sm"
+                onPilih={(barangTerpilih, teks) => pilihBarang(i, barangTerpilih, teks)}
               />
             </div>
             <div className="min-w-[160px]">

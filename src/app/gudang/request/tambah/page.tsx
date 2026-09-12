@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { buatRequestManual } from "./actions";
+import { ComboboxBarang } from "@/components/ui/ComboboxBarang";
 
 type Branch = { id: string; nama: string };
 type Barang = { id: string; kode: string; nama: string; satuan_dasar: string };
@@ -11,6 +12,7 @@ type SatuanTambahan = { item_id: string; nama_satuan: string };
 
 type BarisItem = {
   itemId: string;
+  teksBarang: string;
   qty: string;
   satuan: string;
   keterangan: string;
@@ -25,17 +27,17 @@ export default function TambahRequestManualPage() {
   const [daftarBarang, setDaftarBarang] = useState<Barang[]>([]);
   const [satuanTambahan, setSatuanTambahan] = useState<SatuanTambahan[]>([]);
   const [branchId, setBranchId] = useState("");
-  const [baris, setBaris] = useState<BarisItem[]>([{ itemId: "", qty: "", satuan: "", keterangan: "" }]);
+  const [baris, setBaris] = useState<BarisItem[]>([{ itemId: "", teksBarang: "", qty: "", satuan: "", keterangan: "" }]);
 
   useEffect(() => {
     async function muat() {
       const { data: branches } = await supabase.from("branches").select("id, nama").order("nama");
       setDaftarBranch((branches as Branch[]) ?? []);
 
-      const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama");
+      const { data: items } = await supabase.from("items").select("id, kode, nama, satuan_dasar").eq("nonaktif", false).order("nama").range(0, 9999);
       setDaftarBarang((items as Barang[]) ?? []);
 
-      const { data: satuan } = await supabase.from("item_units").select("item_id, nama_satuan");
+      const { data: satuan } = await supabase.from("item_units").select("item_id, nama_satuan").range(0, 9999);
       setSatuanTambahan((satuan as SatuanTambahan[]) ?? []);
     }
     muat();
@@ -48,20 +50,30 @@ export default function TambahRequestManualPage() {
     return [barang.satuan_dasar, ...tambahan];
   }
 
-  function ubahBaris(index: number, field: keyof BarisItem, value: string) {
+  function ubahBaris(index: number, field: "qty" | "satuan" | "keterangan", value: string) {
     setBaris((prev) => {
       const baru = [...prev];
       baru[index] = { ...baru[index], [field]: value };
-      if (field === "itemId") {
-        const opsi = opsiSatuan(value);
-        baru[index].satuan = opsi[0] ?? "";
-      }
+      return baru;
+    });
+  }
+
+  function pilihBarang(index: number, barangTerpilih: Barang | null, teks: string) {
+    setBaris((prev) => {
+      const baru = [...prev];
+      const opsi = barangTerpilih ? opsiSatuan(barangTerpilih.id) : [];
+      baru[index] = {
+        ...baru[index],
+        teksBarang: teks,
+        itemId: barangTerpilih ? barangTerpilih.id : "",
+        satuan: opsi[0] ?? "",
+      };
       return baru;
     });
   }
 
   function tambahBaris() {
-    setBaris((prev) => [...prev, { itemId: "", qty: "", satuan: "", keterangan: "" }]);
+    setBaris((prev) => [...prev, { itemId: "", teksBarang: "", qty: "", satuan: "", keterangan: "" }]);
   }
 
   function hapusBaris(index: number) {
@@ -99,24 +111,14 @@ export default function TambahRequestManualPage() {
         <div className="mb-4 rounded-xl border bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-sm font-medium text-slate-700">Daftar Barang</h2>
 
-          <datalist id="daftar-barang-manual">
-            {daftarBarang.map((b) => (
-              <option key={b.id} value={`${b.kode} - ${b.nama}`} />
-            ))}
-          </datalist>
-
           {baris.map((b, i) => (
             <div key={i} className="mb-3 flex flex-wrap items-end gap-3">
               <div className="min-w-[200px] flex-1">
                 <label className="mb-1 block text-xs text-slate-500">Barang</label>
-                <input
-                  list="daftar-barang-manual"
-                  placeholder="Ketik kode atau nama barang..."
-                  onChange={(e) => {
-                    const cocok = daftarBarang.find((x) => `${x.kode} - ${x.nama}` === e.target.value);
-                    if (cocok) ubahBaris(i, "itemId", cocok.id);
-                  }}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                <ComboboxBarang
+                  daftarBarang={daftarBarang}
+                  value={b.teksBarang}
+                  onPilih={(barangTerpilih, teks) => pilihBarang(i, barangTerpilih, teks)}
                 />
                 <input type="hidden" name="itemId" value={b.itemId} />
               </div>
