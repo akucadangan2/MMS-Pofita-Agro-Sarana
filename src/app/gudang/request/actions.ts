@@ -241,3 +241,36 @@ export async function batalkanSeluruhRequest(formData: FormData) {
   revalidatePath(`/gudang/request/${requestId}`);
   redirect("/gudang/request?berhasil=1");
 }
+
+export async function pendingkanItemRequest(formData: FormData) {
+  const itemId = formData.get("itemId") as string;
+  const requestId = formData.get("requestId") as string;
+  const alasan = formData.get("alasan") as string;
+
+  const supabase = await createClient();
+
+  await supabase
+    .from("request_items")
+    .update({ status: "pending", catatan: alasan || null })
+    .eq("id", itemId);
+
+  revalidatePath("/gudang/picking");
+  revalidatePath("/gudang/picking/pending");
+  revalidatePath(`/gudang/request/${requestId}`);
+}
+
+export async function aktifkanKembaliDariPending(formData: FormData) {
+  const itemId = formData.get("itemId") as string;
+  const requestId = formData.get("requestId") as string;
+
+  const supabase = await createClient();
+
+  await supabase
+    .from("request_items")
+    .update({ status: "belum", catatan: null })
+    .eq("id", itemId);
+
+  revalidatePath("/gudang/picking");
+  revalidatePath("/gudang/picking/pending");
+  revalidatePath(`/gudang/request/${requestId}`);
+}
